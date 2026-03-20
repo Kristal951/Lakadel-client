@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #b10e0e;
+  --accent: #b10e0e;
+  --hover: rgba(0, 0, 0, 0.06);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  transition: background-color 200ms ease, color 200ms ease;
+  font-family: var(--font-sans), system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+/* Disable transitions on first paint */
+html:not(.theme-ready) * {
+  transition: none !important;
+}
+
+/* Dark mode tokens */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+  --hover: rgba(255, 255, 255, 0.18);
+}
+
+/* Font scaling */
+html[data-font="1"] {
+  font-size: 14px;
+}
+
+html[data-font="2"] {
+  font-size: 16px;
+}
+
+html[data-font="3"] {
+  font-size: 18px;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* UX polish */
+button,
+input[type="checkbox"],
+select {
+  cursor: pointer;
+}
+
+/* Hide scrollbar but allow scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "OrderItem" ADD COLUMN     "lineTotalKobo" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "unitPriceKobo" INTEGER NOT NULL DEFAULT 0;
