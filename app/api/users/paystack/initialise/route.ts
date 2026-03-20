@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { paystackInitialize } from "@/lib/paystack";
-import { notifyUserRealtime } from "@/lib/notifyUserRealtime";
+import {
+  notifyAdminsRealtime,
+  notifyUserRealtime,
+} from "@/lib/notifyUserRealtime";
 import { getUserNotificationForStatus } from "@/lib/getUserNotificationsForStatus";
 import { Body } from "@/store/types";
 import { formatOrderNumber } from "@/lib/cartDB";
+import { getAdminNotificationForStatus } from "@/lib/getAdminNotificationsForStatus";
 
 export const runtime = "nodejs";
 
@@ -51,6 +55,8 @@ export async function POST(req: Request) {
         guestId: true,
         paymentRef: true,
         orderNumber: true,
+        total: true
+
       },
     });
 
@@ -120,12 +126,27 @@ export async function POST(req: Request) {
         orderRef,
       });
 
-      if (notif) {
+      if (userNotif) {
         await notifyUserRealtime({
           userId: order.userId!,
-          ...notif,
+          ...userNotif,
           orderId: order.id,
           link: `/orders/${order.orderNumber}`,
+        });
+      }
+
+      const adminNotif = getAdminNotificationForStatus("PENDING", {
+        orderId: order.id,
+        orderRef,
+        customerEmail: order.customerEmail,
+        total: order.total,
+      });
+
+      if (adminNotif) {
+        await notifyAdminsRealtime({
+          ...adminNotif,
+          dedupeKeyPrefix: `admin:${adminNotif.action}:${order.id}`,
+          link: `/admin/orders/${order.id}`,
         });
       }
     }

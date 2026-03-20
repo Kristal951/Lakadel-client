@@ -2,9 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
-import { notifyUserRealtime } from "@/lib/notifyUserRealtime";
+import {
+  notifyAdminsRealtime,
+  notifyUserRealtime,
+} from "@/lib/notifyUserRealtime";
 import { getUserNotificationForStatus } from "@/lib/getUserNotificationsForStatus";
 import { formatOrderNumber } from "@/lib/cartDB";
+import { getAdminNotificationForStatus } from "@/lib/getAdminNotificationsForStatus";
 
 export const runtime = "nodejs";
 
@@ -15,7 +19,10 @@ export async function POST(req: Request) {
 
     const orderId = body?.orderId as string | undefined;
     if (!orderId) {
-      return NextResponse.json({ error: "orderId is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "orderId is required" },
+        { status: 400 },
+      );
     }
 
     const order = await prisma.order.findUnique({
@@ -25,6 +32,8 @@ export async function POST(req: Request) {
         userId: true,
         status: true,
         orderNumber: true,
+        customerEmail: true,
+        total: true
       },
     });
 
@@ -32,7 +41,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (session?.user?.id && order.userId && session.user.id !== order.userId || session?.user.role !== "ADMIN") {
+    if (
+      (session?.user?.id && order.userId && session.user.id !== order.userId) ||
+      session?.user.role !== "ADMIN"
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -54,11 +66,26 @@ export async function POST(req: Request) {
         orderRef,
       });
 
-      if (notif) {
+      if (userNotif) {
         await notifyUserRealtime({
           userId: order.userId,
-          ...notif,
+          ...userNotif,
           link: `/orders/${order.orderNumber}`,
+        });
+      }
+
+      const adminNotif = getAdminNotificationForStatus("CANCELLED", {
+        orderId: order.id,
+        orderRef,
+        customerEmail: order.customerEmail,
+        total: order.total,
+      });
+
+      if (adminNotif) {
+        await notifyAdminsRealtime({
+          ...adminNotif,
+          dedupeKeyPrefix: `admin:${adminNotif.action}:${order.id}`,
+          link: `/admin/orders/${order.id}`,
         });
       }
     }
@@ -68,7 +95,7 @@ export async function POST(req: Request) {
     console.error("POST /api/payments/paystack/cancel error:", error);
     return NextResponse.json(
       { error: "Failed to cancel order" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

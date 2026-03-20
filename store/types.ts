@@ -201,6 +201,7 @@ export type AppNotification = {
   priority?: NotificationPriority;
   meta?: Record<string, any>;
   order?: any;
+  dedupeKey?: string;
 };
 
 export type Store = {

@@ -34,8 +34,39 @@ type DashboardChartsProps = {
   monthlyRevenueData: MonthlyRevenuePoint[];
 };
 
-const moneyFormatter = (value: number | string | undefined) =>
-  `₦${Number(value ?? 0).toLocaleString()}`;
+const formatTooltipValue = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return value.join(" - ");
+  }
+
+  if (typeof value === "number") {
+    return `₦${value.toLocaleString()}`;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? value : `₦${parsed.toLocaleString()}`;
+  }
+
+  return "₦0";
+};
+
+const formatCountTooltipValue = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return value.join(" - ");
+  }
+
+  if (typeof value === "number") {
+    return value.toLocaleString();
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? value : parsed.toLocaleString();
+  }
+
+  return "0";
+};
 
 export function DashboardCharts({
   revenueTrend,
@@ -98,9 +129,7 @@ export function DashboardCharts({
                   tickFormatter={(value) => `₦${Number(value).toLocaleString()}`}
                 />
                 <Tooltip
-                  formatter={(value: number | string | undefined) =>
-                    moneyFormatter(value)
-                  }
+                  formatter={(value) => formatTooltipValue(value)}
                   contentStyle={{
                     borderRadius: 16,
                     border: "1px solid rgba(120,120,120,0.15)",
@@ -113,7 +142,7 @@ export function DashboardCharts({
                   strokeWidth={3}
                   dot={{ r: 4 }}
                   activeDot={{ r: 6 }}
-                  stroke="#b10e0e" 
+                  stroke="#b10e0e"
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -161,16 +190,14 @@ export function DashboardCharts({
                   tickFormatter={(value) => `₦${Number(value).toLocaleString()}`}
                 />
                 <Tooltip
-                  formatter={(value: number | string | undefined) =>
-                    moneyFormatter(value)
-                  }
+                  formatter={(value) => formatTooltipValue(value)}
                   contentStyle={{
                     borderRadius: 16,
                     border: "1px solid rgba(120,120,120,0.15)",
                     background: "var(--background)",
                   }}
                 />
-                <Bar dataKey="revenue" radius={[10, 10, 0, 0]} fill="#b10e0e"/>
+                <Bar dataKey="revenue" radius={[10, 10, 0, 0]} fill="#b10e0e" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -197,7 +224,7 @@ export function DashboardCharts({
             </div>
           </div>
 
-          <div className="h-85 rounded-3xl bg-muted/20  p-3">
+          <div className="h-85 rounded-3xl bg-muted/20 p-3">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={statusData}
@@ -217,16 +244,14 @@ export function DashboardCharts({
                   fontSize={12}
                 />
                 <Tooltip
-                  formatter={(value: number | string | undefined) =>
-                    Number(value ?? 0).toLocaleString()
-                  }
+                  formatter={(value) => formatCountTooltipValue(value)}
                   contentStyle={{
                     borderRadius: 16,
                     border: "1px solid rgba(120,120,120,0.15)",
                     background: "var(--background)",
                   }}
                 />
-                <Bar dataKey="value" radius={[10, 10, 0, 0]} fill="#b10e0e"/>
+                <Bar dataKey="value" radius={[10, 10, 0, 0]} fill="#b10e0e" />
               </BarChart>
             </ResponsiveContainer>
           </div>

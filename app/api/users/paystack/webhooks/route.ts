@@ -1,9 +1,13 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { notifyUserRealtime } from "@/lib/notifyUserRealtime";
+import {
+  notifyAdminsRealtime,
+  notifyUserRealtime,
+} from "@/lib/notifyUserRealtime";
 import { getUserNotificationForStatus } from "@/lib/getUserNotificationsForStatus";
 import { clearCartForPayer, formatOrderNumber } from "@/lib/cartDB";
+import { getAdminNotificationForStatus } from "@/lib/getAdminNotificationsForStatus";
 
 export const runtime = "nodejs";
 
@@ -35,6 +39,8 @@ async function markOrderFailed(params: {
       userId: true,
       status: true,
       orderNumber: true,
+      customerEmail: true,
+      total: true,
     },
   });
 
@@ -60,11 +66,26 @@ async function markOrderFailed(params: {
       orderRef,
     });
 
-    if (notif) {
+    if (userNotif) {
       await notifyUserRealtime({
         userId: order.userId,
-        ...notif,
+        ...userNotif,
         link: `/orders/${order.orderNumber}`,
+      });
+    }
+
+    const adminNotif = getAdminNotificationForStatus("FAILED", {
+      orderId: order.id,
+      orderRef,
+      customerEmail: order.customerEmail,
+      total: order.total,
+    });
+
+    if (adminNotif) {
+      await notifyAdminsRealtime({
+        ...adminNotif,
+        dedupeKeyPrefix: `admin:${adminNotif.action}:${order.id}`,
+        link: `/admin/orders/${order.id}`,
       });
     }
   }
@@ -121,12 +142,13 @@ export async function POST(req: Request) {
       status: true,
       totalKobo: true,
       orderNumber: true,
+      customerEmail: true,
+      total: true,
     },
   });
 
   if (!order) return NextResponse.json({ ok: true });
 
-  // 3. Amount mismatch => fail order
   if (order.totalKobo !== amountKobo) {
     await markOrderFailed({
       orderId,
@@ -172,11 +194,26 @@ export async function POST(req: Request) {
       orderRef,
     });
 
-    if (notif) {
+    if (userNotif) {
       await notifyUserRealtime({
         userId: order.userId,
-        ...notif,
+        ...userNotif,
         link: `/orders/${order.orderNumber}`,
+      });
+    }
+
+    const adminNotif = getAdminNotificationForStatus("PAID", {
+      orderId: order.id,
+      orderRef,
+      customerEmail: order.customerEmail,
+      total: order.total,
+    });
+
+    if (adminNotif) {
+      await notifyAdminsRealtime({
+        ...adminNotif,
+        dedupeKeyPrefix: `admin:${adminNotif.action}:${order.id}`,
+        link: `/admin/orders/${order.id}`,
       });
     }
   }
