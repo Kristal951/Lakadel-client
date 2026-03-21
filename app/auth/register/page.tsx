@@ -32,7 +32,7 @@ export default function Register() {
         password: formData.password,
       });
 
-       if (!result.success) {
+      if (!result.success) {
         showToast(result.message, "error");
         return;
       }
@@ -63,7 +63,7 @@ export default function Register() {
           <button
             type="button"
             onClick={() => signIn("google", { callbackUrl: "/shop" })}
-            className="flex w-full items-center justify-center gap-3 px-4 py-3 border border-foreground/30  rounded-xl text-slate-700 font-medium hover:bg-slate-50 transition-all duration-200 active:scale-[0.98]"
+            className="flex w-full hover:bg-slate-100 items-center justify-center gap-3 px-4 py-3 border border-foreground/30  rounded-xl text-slate-700 font-medium transition-all duration-200 active:scale-[0.98]"
           >
             <FcGoogle size={22} />
             <span>Sign up with Google</span>
@@ -78,7 +78,6 @@ export default function Register() {
           </div>
 
           <div className="space-y-4">
-            {/* Full Name */}
             <div className="relative group">
               <input
                 type="text"
@@ -99,7 +98,6 @@ export default function Register() {
               </label>
             </div>
 
-            {/* Email */}
             <div className="relative group">
               <input
                 type="email"
@@ -120,7 +118,6 @@ export default function Register() {
               </label>
             </div>
 
-            {/* Password */}
             <div className="relative group">
               <input
                 type="password"

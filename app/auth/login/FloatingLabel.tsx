@@ -86,7 +86,7 @@ export default function FloatingLabelLogin() {
           <button
             type="button"
             onClick={handleGoogle}
-            className="flex w-full items-center justify-center gap-3 px-4 py-3 border border-foreground/30 rounded-xl text-slate-700 font-medium hover:bg-slate-50 transition-all duration-200 active:scale-[0.98]"
+            className="flex w-full hover:bg-slate-100 items-center justify-center gap-3 px-4 py-3 border border-foreground/30 rounded-xl text-slate-700 font-medium transition-all duration-200 active:scale-[0.98]"
           >
             <FcGoogle size={22} />
             <span>Continue with Google</span>

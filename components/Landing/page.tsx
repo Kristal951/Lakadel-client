@@ -1,9 +1,7 @@
 
 import NavBar from "@/components/Landing/NavBar";
-import Products from "./Products";
 import Contact from "./Contact";
 import { Hero } from "./Hero";
-import AboutUs from "./AboutUs";
 
 export default function LandingPage() {
   return (

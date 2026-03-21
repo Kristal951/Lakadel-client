@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const slides = [
   {
     id: 1,
-    image: "/assets/Slide_1.jpg", // Replace with your image paths
+    image: "/assets/Slide_1.jpg",
     title: "Timeless Sophistication",
   },
   {
@@ -22,7 +22,7 @@ export const Hero = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setIndex((prev) => (prev + 1) % slides.length);
-    }, 5000); // Change slide every 5 seconds
+    }, 5000); 
     return () => clearInterval(timer);
   }, []);
 
@@ -39,7 +39,6 @@ export const Hero = () => {
           transition={{ duration: 1.5, ease: "easeOut" }}
           className="absolute z-0 inset-0"
         >
-          {/* Overlay for readability */}
           <div className="absolute inset-0 bg-black/20 z-10" />
           
           <img

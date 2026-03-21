@@ -13,8 +13,6 @@ import {
   RefreshCw,
   Clock,
   Hash,
-  Box,
-  CreditCard,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -84,11 +82,6 @@ const OrderClient = ({ order, orderRef }: { order: any; orderRef: string }) => {
   const [retrying, setRetrying] = useState(false);
 
   const currentWeight = statusWeight[order.status] || 0;
-
-  const progressWidth = useMemo(() => {
-    if (currentWeight <= 1) return "0%";
-    return `${((currentWeight - 1) / (STEPS.length - 1)) * 100}%`;
-  }, [currentWeight]);
 
   const handleRetryPayment = async () => {
     try {

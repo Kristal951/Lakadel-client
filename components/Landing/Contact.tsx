@@ -8,10 +8,11 @@ import {
   FaLinkedinIn,
 } from "react-icons/fa";
 import "react-phone-number-input/style.css";
-import PhoneInput from "react-phone-number-input";
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 import emailjs from "@emailjs/browser";
 import { useToast } from "@/hooks/useToast";
 import Spinner from "../ui/spinner";
+import { CustomPhoneInput } from "./CustomPhoneInput";
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -35,10 +36,15 @@ export default function Contact() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("loading");
+    if (phone && !isValidPhoneNumber(phone)) {
+      showToast("Please enter a valid phone number.", "error");
+      setStatus(null);
+      return;
+    }
 
     try {
       await emailjs.send(
-        process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID! ,
+        process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
         process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
         {
           name: formData.name,
@@ -151,7 +157,6 @@ export default function Contact() {
           </div>
         </div>
 
-        {/* RIGHT */}
         <div className="w-full lg:w-1/2">
           <div className="text-center lg:text-left">
             <h2 className="text-4xl sm:text-5xl font-serif text-[#B10E0E] font-light">
@@ -187,8 +192,7 @@ export default function Contact() {
               required
             />
 
-            {/* Phone Input Wrapper */}
-            <div className="w-full border border-[#B10E0E] rounded overflow-hidden focus-within:border-black transition bg-white">
+            <div className="w-full border border-[#B10E0E] rounded overflow-hidden pl-4 focus-within:border-black transition bg-white">
               <PhoneInput
                 placeholder="Your Phone Number"
                 value={phone}
@@ -197,14 +201,7 @@ export default function Contact() {
                 international
                 countryCallingCodeEditable
                 className="w-full"
-                inputComponent={({ value, onChange, ...props }: any) => (
-                  <input
-                    {...props}
-                    value={value}
-                    onChange={onChange}
-                    className="w-full h-12 px-3 text-gray-900 placeholder-gray-400 outline-none"
-                  />
-                )}
+                inputComponent={CustomPhoneInput}
               />
             </div>
 
@@ -231,5 +228,5 @@ export default function Contact() {
         </div>
       </div>
     </section>
-  )
+  );
 }
