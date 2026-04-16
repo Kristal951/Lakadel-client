@@ -11,5 +11,5 @@ jobs:
     steps:
       - name: Call expire orders API
         run: |
-          curl -X POST https://lakadel.vercel.app/api/jobs/expire-pending-orders \
+          curl -X POST https://lakadel-client.vercel.app/api/jobs/expire-pending-orders \
           -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"

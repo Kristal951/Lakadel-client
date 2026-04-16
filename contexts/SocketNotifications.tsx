@@ -6,24 +6,16 @@ import { useUserNotificationStore } from "@/store/userNotificationsStore";
 import { useAdminNotificationStore } from "@/store/adminNotificationStore";
 
 export function UserNotificationsBootstrap() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   const fetchUserNotifications = useUserNotificationStore(
     (s) => s.fetchNotifications,
   );
 
   useEffect(() => {
-    if (status !== "authenticated") return;
-
-    const user = session?.user as {
-      id?: string;
-      role?: "USER" | "ADMIN";
-    };
-
-    if (!user?.id) return;
-
+    if (status === "loading") return;
     fetchUserNotifications();
-  }, [status, session, fetchUserNotifications]);
+  }, [status, fetchUserNotifications]);
 
   return null;
 }

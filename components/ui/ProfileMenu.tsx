@@ -3,7 +3,7 @@
 import useUserStore from "@/store/userStore";
 import { Heart, Shield, ShoppingBag } from "lucide-react";
 import Link from "next/link";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { FiSettings, FiLogOut } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -20,14 +20,33 @@ export default function ProfileMenu({ setOpen, open }: ProfileMenuProps) {
 
   const { logout, currency, currencySymbol, setLoggingOut } = useUserStore();
   const { data: session, status } = useSession();
-  const user = session?.user as
-    | (typeof session extends { user: infer U } ? U : any)
-    | undefined;
 
-  const isGuest = status === "authenticated" && !!user && user.isGuest === true;
+  const [identity, setIdentity] = useState<{
+    userId: string | null;
+    guestId: string | null;
+    role?: string;
+  } | null>(null);
+
+  const user = session?.user as any;
+
+  useEffect(() => {
+    const fetchIdentity = async () => {
+      try {
+        const res = await fetch("/api/users/me");
+        const data = await res.json();
+        setIdentity(data);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    fetchIdentity();
+  }, []);
 
   const isAuthedUser =
     status === "authenticated" && !!user && user.isGuest !== true;
+
+  const isGuest = status === "authenticated" && !!user && user.isGuest === true;
 
   useEffect(() => {
     if (!open) return;
@@ -52,6 +71,7 @@ export default function ProfileMenu({ setOpen, open }: ProfileMenuProps) {
   const handleLogout = async () => {
     setLoggingOut(true);
     setOpen(false);
+
     try {
       useCartStore.getState().clearLocalCart();
       logout();
@@ -77,7 +97,7 @@ export default function ProfileMenu({ setOpen, open }: ProfileMenuProps) {
   return (
     <div
       ref={menuRef}
-      className="absolute right-0 top-8 w-54 rounded-xl border border-foreground/20 bg-background shadow-lg py-2 z-50"
+      className="absolute right-0 top-8 w-52 rounded-xl border border-foreground/20 bg-background shadow-lg py-2 z-50"
     >
       <div className="px-4 py-2 border-b border-foreground/10 mb-1">
         {isAuthedUser ? (
@@ -146,15 +166,6 @@ export default function ProfileMenu({ setOpen, open }: ProfileMenuProps) {
             </Link>
           </li>
         )}
-
-        <li>
-          {/* TODO: Enable when settings page is ready
-  <span className="flex items-center px-4 py-2.5 text-sm font-medium opacity-50 cursor-not-allowed">
-    <FiSettings className="w-5 h-5 mr-2" />
-    Settings (Coming soon)
-  </span>
-  */}
-        </li>
 
         {isAuthedUser && (
           <li>

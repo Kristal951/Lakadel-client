@@ -42,7 +42,7 @@ export async function generateOrderNumber() {
 }
 
 export function formatOrderNumber(orderNumber: number ) {
-  return `LDK-${orderNumber.toString().padStart(6, "0")}`;
+  return `LKD-${orderNumber.toString().padStart(6, "0")}`;
 }
 
 export function getBaseUrl() {

@@ -84,7 +84,7 @@ export default function UserNotificationDropdown({
         aria-modal="true"
         role="dialog"
       >
-        <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+        <div className="hidden md:flex absolute inset-0 bg-black/30" onClick={onClose} />
 
         <motion.aside
           initial={{ x: 40, opacity: 0 }}

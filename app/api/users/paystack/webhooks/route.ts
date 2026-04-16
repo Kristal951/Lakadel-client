@@ -41,6 +41,7 @@ async function markOrderFailed(params: {
       orderNumber: true,
       customerEmail: true,
       total: true,
+      guestId: true,
     },
   });
 
@@ -68,7 +69,8 @@ async function markOrderFailed(params: {
 
     if (userNotif) {
       await notifyUserRealtime({
-        userId: order.userId,
+        userId: order.userId ?? null,
+        guestId: order.guestId ?? null,
         ...userNotif,
         link: `/orders/${order.orderNumber}`,
       });
@@ -196,7 +198,8 @@ export async function POST(req: Request) {
 
     if (userNotif) {
       await notifyUserRealtime({
-        userId: order.userId,
+        userId: order.userId ?? null,
+        guestId: order.guestId ?? null,
         ...userNotif,
         link: `/orders/${order.orderNumber}`,
       });

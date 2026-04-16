@@ -172,7 +172,7 @@ export function cld(url: string, w = 800) {
 export function parseOrderRef(orderRef?: string) {
   if (!orderRef) return null;
 
-  const cleaned = orderRef.toUpperCase().replace("LDK-", "");
+  const cleaned = orderRef.toUpperCase().replace("L-", "");
   const num = Number(cleaned);
 
   if (!Number.isInteger(num) || num <= 0) return null;

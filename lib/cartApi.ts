@@ -1,13 +1,6 @@
 // /lib/cartApi.ts
 import type { CartItemPayload } from "@/store/types";
-import { getSession } from "next-auth/react";
-
 export type CartGetResponse = { items: CartItemPayload[] };
-
-async function hasSession() {
-  const session = await getSession();
-  return !!session;
-}
 
 async function getErrorText(res: Response) {
   try {
@@ -19,8 +12,6 @@ async function getErrorText(res: Response) {
 }
 
 export async function cartGet(): Promise<CartGetResponse> {
-  if (!(await hasSession())) return { items: [] };
-
   try {
     const res = await fetch("/api/cart", {
       method: "GET",
@@ -34,7 +25,7 @@ export async function cartGet(): Promise<CartGetResponse> {
     }
 
     const data = (await res.json()) as unknown;
-        console.log(data, 'cartGet')
+    console.log(data, "cartGet");
     if (Array.isArray((data as any)?.items)) return data as CartGetResponse;
     if (Array.isArray(data as any)) return { items: data as any };
 
@@ -46,13 +37,13 @@ export async function cartGet(): Promise<CartGetResponse> {
 }
 
 export async function cartAdd(payload: CartItemPayload) {
-  if (!(await hasSession())) throw new Error("Not authenticated");
-
+    console.log(payload, 'payload')
   const res = await fetch("/api/cart", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ...payload, action: "add" }),
   });
+  console.log(res, 'res')
 
   if (!res.ok) {
     throw new Error(
@@ -66,8 +57,6 @@ export async function cartAdd(payload: CartItemPayload) {
 export async function cartUpdate(
   payload: CartItemPayload & { action: "increase" | "decrease" | "remove" },
 ) {
-  if (!(await hasSession())) throw new Error("Not authenticated");
-
   const quantity =
     payload.action === "remove"
       ? 1
@@ -78,6 +67,7 @@ export async function cartUpdate(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ...payload, quantity }),
   });
+  console.log(res, "resres");
 
   if (!res.ok) {
     throw new Error(
@@ -89,8 +79,6 @@ export async function cartUpdate(
 }
 
 export async function cartClear() {
-  if (!(await hasSession())) throw new Error("Not authenticated");
-
   const res = await fetch("/api/cart", {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
@@ -107,8 +95,6 @@ export async function cartClear() {
 }
 
 export async function fetchProduct(productId: string) {
-  if (!(await hasSession())) throw new Error("Not authenticated");
-
   const res = await fetch(`/api/users/products/${productId}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },

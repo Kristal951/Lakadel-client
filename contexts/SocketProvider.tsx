@@ -2,77 +2,67 @@
 
 import { useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
-import { useSession } from "next-auth/react";
 import { useUserNotificationStore } from "@/store/userNotificationsStore";
 import { AppNotification } from "@/store/types";
 import { useAdminNotificationStore } from "@/store/adminNotificationStore";
 
 export default function SocketNotificationsClient() {
-  const { data: session, status } = useSession();
   const pushUser = useUserNotificationStore((s) => s.push);
   const pushAdmin = useAdminNotificationStore((s) => s.push);
+
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    if (status !== "authenticated") return;
+    let socket: Socket;
 
-    const user = session?.user as {
-      id?: string;
-      role?: "USER" | "ADMIN";
-    };
+    const init = async () => {
+      const res = await fetch("/api/users/me");
+      const { userId, guestId, role } = await res.json();
 
-    const userId = user?.id;
-    const role = user?.role ?? "USER";
+      if (!userId && !guestId) return;
 
-    if (!userId) return;
+      socket = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
+        transports: ["websocket"],
+      });
 
-    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
-      transports: ["websocket"],
-    });
+      const handleUserNotification = (n: AppNotification) => {
+        if (n.audience && n.audience !== "USER") return;
+        pushUser(n);
+      };
 
-    const handleUserNotification = (n: AppNotification) => {
-      console.log("📩 user realtime notification:", n);
-      pushUser(n);
-    };
+      const handleAdminNotification = (n: AppNotification) => {
+        if (n.audience && n.audience !== "ADMIN") return;
+        pushAdmin(n);
+      };
 
-    const handleAdminNotification = (n: AppNotification) => {
-      console.log("🛡️ admin realtime notification:", n);
-      pushAdmin(n);
-    };
+      socket.on("connect", () => {
+        socket.emit("join", {
+          userId,
+          guestId,
+          role,
+        });
+      });
 
-    const onUserNotification = (n: AppNotification) => {
-      if (n.audience && n.audience !== "USER") return;
-      handleUserNotification(n);
-    };
-
-    const onAdminNotification = (n: AppNotification) => {
-      if (n.audience && n.audience !== "ADMIN") return;
-      handleAdminNotification(n);
-    };
-
-    socket.on("connect", () => {
-      socket.emit("join", { userId, role });
-    });
-
-    socket.on("notification:new", onUserNotification);
-
-    if (role === "ADMIN") {
-      socket.on("admin:notification:new", onAdminNotification);
-    }
-
-    socketRef.current = socket;
-
-    return () => {
-      socket.off("notification:new", onUserNotification);
+      socket.on("notification:new", handleUserNotification);
 
       if (role === "ADMIN") {
-        socket.off("admin:notification:new", onAdminNotification);
+        socket.on("admin:notification:new", handleAdminNotification);
       }
 
-      socket.disconnect();
+      socketRef.current = socket;
+    };
+
+    init();
+
+    return () => {
+      if (!socketRef.current) return;
+
+      socketRef.current.off("notification:new");
+      socketRef.current.off("admin:notification:new");
+      socketRef.current.disconnect();
       socketRef.current = null;
     };
-  }, [status, session, pushUser, pushAdmin]);
+  }, [pushUser, pushAdmin]);
 
   return null;
 }

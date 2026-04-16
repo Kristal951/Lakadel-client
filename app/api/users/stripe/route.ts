@@ -8,6 +8,7 @@ import {
 import { getUserNotificationForStatus } from "@/lib/getUserNotificationsForStatus";
 import { formatOrderNumber } from "@/lib/cartDB";
 import { getAdminNotificationForStatus } from "@/lib/getAdminNotificationsForStatus";
+import { getGuestId } from "@/lib/guest";
 
 export const runtime = "nodejs";
 
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
 
-    const { orderId, userId, guestId, email } = body;
+    const { orderId, userId, email } = body;
 
     if (!orderId) {
       return NextResponse.json(
@@ -41,12 +42,8 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
-    if (!userId && !guestId) {
-      return NextResponse.json(
-        { error: "guestId required for guest checkout" },
-        { status: 400 },
-      );
-    }
+
+    const guestID = await getGuestId(); // ✅ FIXED
 
     const appUrl = getAppUrl();
     if (!appUrl) {
@@ -78,10 +75,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
+    // ✅ AUTH CHECKS
     if (userId && order.userId && order.userId !== userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
-    if (!userId && guestId && order.guestId && order.guestId !== guestId) {
+
+    if (!userId && order.guestId && guestID && order.guestId !== guestID) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -101,11 +100,17 @@ export async function POST(req: Request) {
 
     const currency = (order.currency || "NGN").toLowerCase();
 
+    const normalizedEmail =
+      (email || order.customerEmail || "").trim().toLowerCase() || undefined;
+
+    // ✅ FETCH PRODUCTS
     const productIds = [...new Set(order.orderItems.map((i) => i.productId))];
+
     const products = await prisma.product.findMany({
       where: { id: { in: productIds } },
       select: { id: true, name: true, images: true, price: true },
     });
+
     const productMap = new Map(products.map((p) => [p.id, p]));
 
     const line_items = order.orderItems.map((i) => {
@@ -113,6 +118,7 @@ export async function POST(req: Request) {
       if (!p) throw new Error("Product missing for an order item");
 
       const unit_amount = Math.round(Number(p.price) * 100);
+
       if (!Number.isFinite(unit_amount) || unit_amount <= 0) {
         throw new Error("Invalid unit price");
       }
@@ -133,12 +139,11 @@ export async function POST(req: Request) {
 
     const idempotencyKey = `checkout:${order.id}`;
 
+    // ✅ CREATE STRIPE SESSION
     const session = await stripe.checkout.sessions.create(
       {
         mode: "payment",
-        customer_email:
-          (email || order.customerEmail || "").trim().toLowerCase() ||
-          undefined,
+        customer_email: normalizedEmail,
 
         line_items,
 
@@ -146,15 +151,15 @@ export async function POST(req: Request) {
 
         metadata: {
           orderId: order.id,
-          userId: order.userId || "",
-          guestId: order.guestId || "",
+          userId: order.userId ?? "",
+          guestId: order.guestId ?? "",
         },
 
         payment_intent_data: {
           metadata: {
             orderId: order.id,
-            userId: order.userId || "",
-            guestId: order.guestId || "",
+            userId: order.userId ?? "",
+            guestId: order.guestId ?? "",
           },
         },
 
@@ -164,11 +169,10 @@ export async function POST(req: Request) {
       { idempotencyKey },
     );
 
-    const firstTimeInit = !order.paymentRef;
     const userOrderRef = formatOrderNumber(order.orderNumber);
     const adminOrderRef = formatOrderNumber(order.orderNumber);
 
-    await prisma.order.update({
+    const updatedOrder = await prisma.order.update({
       where: { id: order.id },
       data: {
         paymentMethod: "STRIPE",
@@ -177,14 +181,18 @@ export async function POST(req: Request) {
       },
     });
 
-    if (firstTimeInit && order.userId) {
+    const firstTimeInit = !order.paymentRef;
+
+    if (firstTimeInit && updatedOrder.userId) {
       const userNotif = getUserNotificationForStatus("PENDING", {
         orderId: order.id,
         orderRef: userOrderRef,
       });
+
       if (userNotif) {
         await notifyUserRealtime({
-          userId: order.userId,
+          userId: updatedOrder.userId ?? null,
+          guestId: updatedOrder.guestId ?? null,
           ...userNotif,
           link: `/orders/${order.orderNumber}`,
         });
@@ -209,6 +217,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ url: session.url });
   } catch (e: any) {
     console.error("Stripe init error:", e);
+
     return NextResponse.json(
       { error: e?.message || "Failed to initialize Stripe" },
       { status: 500 },

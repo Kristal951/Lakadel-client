@@ -40,18 +40,21 @@ export interface CartStore {
   removeFromCart: (
     productId: string,
     selectedSize?: string | null,
+    selectedColor?: { name: string; hex: string } | null,
     selectedColorHex?: string | null,
   ) => void;
 
   increaseQty: (
     productId: string,
     selectedSize?: string | null,
+    selectedColor?: { name: string; hex: string } | null,
     selectedColorHex?: string | null,
   ) => void;
 
   decreaseQty: (
     productId: string,
     selectedSize?: string | null,
+    selectedColor?: { name: string; hex: string } | null,
     selectedColorHex?: string | null,
   ) => void;
 
@@ -168,8 +171,9 @@ export interface ExchangeRateState {
 export type CartItemPayload = {
   productId: string;
   quantity: number;
-  selectedColor?: { name: string; hex: string } | string | null;
+  selectedColor?: { name: string; hex: string } | null;
   selectedSize: string | null;
+  selectedColorHex: string;
 };
 
 export type Country = {
@@ -187,7 +191,8 @@ export type NotificationPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
 
 export type AppNotification = {
   id: string;
-  userId: string;
+  userId?: string | null;
+  guestId?: string | null;
   title: string;
   message: string;
   type: NotificationType;

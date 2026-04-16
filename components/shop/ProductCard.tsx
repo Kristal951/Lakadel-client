@@ -24,6 +24,8 @@ export default function ProductCard(props: Product & { index?: number }) {
     index = 999,
   } = props;
 
+  console.log(colors?.[0], 'coloras')
+
   const { showToast } = useToast();
   const { currency } = useUserStore();
   const [showOverlay, setShowOverlay] = useState(false);

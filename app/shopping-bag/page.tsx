@@ -78,7 +78,7 @@ export default function ShoppingBag() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
         <div>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
-            Shopping Bag
+            Your Cart
           </h1>
           <p className="text-foreground/50 mt-2 text-lg font-medium">
             {cartItems.length} {cartItems.length === 1 ? "item" : "items"} ready
@@ -175,7 +175,8 @@ export default function ShoppingBag() {
                           decreaseQty(
                             item.productId,
                             item.selectedSize,
-                            item.selectedColor?.hex ?? null,
+                            item.selectedColor,
+                            item.selectedColor?.hex,
                           )
                         }
                         disabled={item.quantity <= 1}
@@ -193,7 +194,8 @@ export default function ShoppingBag() {
                           increaseQty(
                             item.productId,
                             item.selectedSize,
-                            item.selectedColor?.hex ?? null,
+                            item.selectedColor,
+                            item.selectedColor?.hex,
                           )
                         }
                         className="w-8 h-8 flex items-center justify-center hover:bg-foreground/20 rounded-full transition-all"
@@ -211,7 +213,8 @@ export default function ShoppingBag() {
                           removeFromCart(
                             item.productId,
                             item.selectedSize,
-                            item.selectedColor?.hex ?? null,
+                            item.selectedColor,
+                            item.selectedColor?.hex,
                           )
                         }
                         className="p-3 hover:bg-neutral-50 rounded-full transition-colors text-neutral-400 hover:text-black border border-transparent hover:border-neutral-100 disabled:opacity-60"

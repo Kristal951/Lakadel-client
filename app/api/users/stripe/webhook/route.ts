@@ -17,6 +17,7 @@ async function handlePaidNotification(order: {
   orderNumber: number;
   customerEmail: string;
   total: number;
+  guestId: string | null;
 }) {
   const userOrderRef = formatOrderNumber(order.orderNumber);
   const adminOrderRef =formatOrderNumber(order.orderNumber)
@@ -29,7 +30,8 @@ async function handlePaidNotification(order: {
 
     if (userNotif) {
       await notifyUserRealtime({
-        userId: order.userId,
+         userId: order.userId ?? null,
+        guestId: order.guestId ?? null,
         ...userNotif,
         link: `/orders/${order.orderNumber}`,
       });
@@ -58,6 +60,7 @@ async function handleFailedNotification(order: {
   orderNumber: number;
   customerEmail: string;
   total: number;
+  guestId: string | null;
 }) {
   const userOrderRef = formatOrderNumber(order.orderNumber);
     const adminOrderRef =formatOrderNumber(order.orderNumber)
@@ -70,7 +73,8 @@ async function handleFailedNotification(order: {
 
     if (userNotif) {
       await notifyUserRealtime({
-        userId: order.userId,
+        userId: order.userId ?? null,
+        guestId: order.guestId ?? null,
         ...userNotif,
         link: `/orders/${order.orderNumber}`,
       });
@@ -182,6 +186,7 @@ export async function POST(req: Request) {
           orderNumber: order.orderNumber,
           customerEmail: order.customerEmail,
           total: order.total,
+          guestId: order.guestId
         });
       }
     }
@@ -236,6 +241,7 @@ export async function POST(req: Request) {
           orderNumber: order.orderNumber,
           customerEmail: order.customerEmail,
           total: order.total,
+          guestId: order.guestId
         });
       }
     }
@@ -265,6 +271,7 @@ export async function POST(req: Request) {
           orderNumber: true,
           customerEmail: true,
           total: true,
+          guestId: true
         },
       });
 
@@ -275,6 +282,7 @@ export async function POST(req: Request) {
           orderNumber: order.orderNumber,
           customerEmail: order.customerEmail,
           total: order.total,
+          guestId: order.guestId
         });
       }
     }

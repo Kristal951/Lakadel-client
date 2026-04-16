@@ -1,6 +1,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { CartStore, CartItem, CartItemPayload, SelectedColor } from "./types";
+import type {
+  CartStore,
+  CartItem,
+  CartItemPayload,
+  SelectedColor,
+} from "./types";
 import {
   cartGet,
   cartAdd,
@@ -63,6 +68,7 @@ const toPayload = (item: Partial<CartItem>): CartItemPayload => ({
   quantity: item.quantity ?? 1,
   selectedColor: item.selectedColor ?? null,
   selectedSize: item.selectedSize ?? null,
+  selectedColorHex: item.selectedColor?.hex ?? '',
 });
 
 const useCartStore = create<CartStore>()(
@@ -138,7 +144,8 @@ const useCartStore = create<CartStore>()(
         set({ items: next });
 
         try {
-          await cartAdd(toPayload(item));
+          const res = await cartAdd(toPayload(item));
+          console.log(res, "res");
         } catch (error) {
           set({ items: prev });
           throw error;
@@ -147,7 +154,12 @@ const useCartStore = create<CartStore>()(
         }
       },
 
-      removeFromCart: async (productId, selectedSize, selectedColorHex) => {
+      removeFromCart: async (
+        productId,
+        selectedSize,
+        selectedColor,
+        selectedColorHex,
+      ) => {
         const prev = get().items;
 
         const next = prev.filter(
@@ -165,7 +177,8 @@ const useCartStore = create<CartStore>()(
           await cartUpdate({
             productId,
             selectedSize: selectedSize ?? null,
-            selectedColor: selectedColorHex ?? null,
+            selectedColor: selectedColor ?? null,
+            selectedColorHex: selectedColorHex ?? '',
             quantity: 1,
             action: "remove",
           });
@@ -175,7 +188,12 @@ const useCartStore = create<CartStore>()(
         }
       },
 
-      increaseQty: async (productId, selectedSize, selectedColorHex) => {
+      increaseQty: async (
+        productId,
+        selectedSize,
+        selectedColor,
+        selectedColorHex,
+      ) => {
         const prev = get().items;
 
         const next = prev.map((i) => {
@@ -196,7 +214,8 @@ const useCartStore = create<CartStore>()(
           await cartUpdate({
             productId,
             selectedSize: selectedSize ?? null,
-            selectedColor: selectedColorHex ?? null,
+            selectedColor: selectedColor ?? null,
+            selectedColorHex: selectedColorHex ?? '',
             quantity: 1,
             action: "increase",
           });
@@ -206,7 +225,12 @@ const useCartStore = create<CartStore>()(
         }
       },
 
-      decreaseQty: async (productId, selectedSize, selectedColorHex) => {
+      decreaseQty: async (
+        productId,
+        selectedSize,
+        selectedColor,
+        selectedColorHex,
+      ) => {
         const prev = get().items;
 
         const next = prev
@@ -226,7 +250,8 @@ const useCartStore = create<CartStore>()(
           await cartUpdate({
             productId,
             selectedSize: selectedSize ?? null,
-            selectedColor: selectedColorHex ?? null,
+            selectedColor: selectedColor ?? null,
+            selectedColorHex: selectedColorHex ?? '',
             quantity: 1,
             action: "decrease",
           });

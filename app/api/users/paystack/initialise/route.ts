@@ -128,7 +128,8 @@ export async function POST(req: Request) {
 
       if (userNotif) {
         await notifyUserRealtime({
-          userId: order.userId!,
+          userId: order.userId ?? null,
+          guestId: order.guestId ?? null,
           ...userNotif,
           orderId: order.id,
           link: `/orders/${order.orderNumber}`,

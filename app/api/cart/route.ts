@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { prisma } from "@/lib/prisma";
 import type { CartItemPayload, SelectedColor } from "@/store/types";
-import { getGuestId, ensureGuestId } from "@/lib/guest";
+import { getGuestId } from "@/lib/guest";
 
 export const runtime = "nodejs";
 
@@ -68,7 +68,10 @@ async function getCartOwnerForWrite(): Promise<CartOwner> {
   const userId = await getUserId();
   if (userId) return { userId };
 
-  const guestId = await ensureGuestId();
+  const guestId = await getGuestId();
+  if (!guestId) {
+    throw new Error("Guest ID missing (middleware not applied)");
+  }
   return { guestId };
 }
 
@@ -134,6 +137,7 @@ export async function POST(request: NextRequest) {
     }
 
     const selectedColor = normalizeSelectedColorKey(body.selectedColor);
+    const selectedColorHex = body.selectedColorHex;
     const selectedSize = norm(body.selectedSize);
 
     const cart = await prisma.cart.upsert({
@@ -151,10 +155,10 @@ export async function POST(request: NextRequest) {
 
     await prisma.cartItem.upsert({
       where: {
-        cartId_productId_selectedColor_selectedSize: {
+        cartId_productId_selectedColorHex_selectedSize: {
           cartId: cart.id,
           productId: body.productId,
-          selectedColor,
+          selectedColorHex,
           selectedSize,
         },
       },
@@ -163,6 +167,7 @@ export async function POST(request: NextRequest) {
         cartId: cart.id,
         productId: body.productId,
         selectedColor,
+        selectedColorHex: selectedColorHex ?? "",
         selectedSize,
         quantity: qtyToAdd,
       },
@@ -179,6 +184,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const owner = await getCartOwnerForWrite();
+    console.log(owner, 'owner')
 
     const body: CartItemPayload & { action: string } = await request.json();
     const { action, productId } = body;
@@ -209,23 +215,27 @@ export async function PUT(request: NextRequest) {
           : { guestId: owner.guestId },
       select: { id: true },
     });
-    if (!cart)
-      return NextResponse.json({ error: "Cart not found" }, { status: 404 });
+    console.log(cart)
+    if (!cart){
+      console.log('no cart')
+         return NextResponse.json({ error: "Cart not found" }, { status: 404 });
+    }
 
-    const selectedColor = normalizeSelectedColorKey(body.selectedColor);
     const selectedSize = norm(body.selectedSize);
+    const selectedColorHex = body.selectedColorHex;
 
     const key = {
       cartId: cart.id,
       productId,
-      selectedColor,
+      selectedColorHex,
       selectedSize,
     };
+    console.log("DELETE KEY:", key);
 
     if (action === "increase") {
       try {
         await prisma.cartItem.update({
-          where: { cartId_productId_selectedColor_selectedSize: key },
+          where: { cartId_productId_selectedColorHex_selectedSize: key },
           data: { quantity: { increment: qtyDelta } },
         });
       } catch (err: any) {
@@ -244,8 +254,13 @@ export async function PUT(request: NextRequest) {
 
     if (action === "remove") {
       try {
+        const items = await prisma.cartItem.findMany({
+          where: { cartId: key.cartId },
+        });
+
+        console.log("DB ITEMS:", items);
         await prisma.cartItem.delete({
-          where: { cartId_productId_selectedColor_selectedSize: key },
+          where: { cartId_productId_selectedColorHex_selectedSize: key },
         });
       } catch (err: any) {
         if (isPrismaRecordNotFound(err)) {
@@ -265,7 +280,7 @@ export async function PUT(request: NextRequest) {
     try {
       await prisma.$transaction(async (tx) => {
         const item = await tx.cartItem.findUnique({
-          where: { cartId_productId_selectedColor_selectedSize: key },
+          where: { cartId_productId_selectedColorHex_selectedSize: key },
           select: { id: true, quantity: true },
         });
 

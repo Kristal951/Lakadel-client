@@ -5,7 +5,10 @@ import { authOptions } from "@/lib/authOptions";
 import { OrderStatus } from "@prisma/client";
 import { formatOrderNumber } from "@/lib/cartDB";
 import { getUserNotificationForStatus } from "@/lib/getUserNotificationsForStatus";
-import { notifyAdminsRealtime, notifyUserRealtime } from "@/lib/notifyUserRealtime";
+import {
+  notifyAdminsRealtime,
+  notifyUserRealtime,
+} from "@/lib/notifyUserRealtime";
 import { getAdminNotificationForStatus } from "@/lib/getAdminNotificationsForStatus";
 
 const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
@@ -53,7 +56,8 @@ export async function PATCH(
         paidAt: true,
         orderNumber: true,
         customerEmail: true,
-        total: true
+        total: true,
+        guestId: true,
       },
     });
 
@@ -85,7 +89,7 @@ export async function PATCH(
       },
     });
 
-    if (order.userId) {
+    if (order.userId || order.guestId) {
       const orderRef = formatOrderNumber(order.orderNumber);
 
       const userNotif = getUserNotificationForStatus(nextStatus, {
@@ -95,26 +99,27 @@ export async function PATCH(
 
       if (userNotif) {
         await notifyUserRealtime({
-          userId: order.userId,
+          userId: order.userId ?? null,
+          guestId: order.guestId ?? null,
           ...userNotif,
           link: `/orders/${order.orderNumber}`,
         });
       }
 
-       const adminNotif = getAdminNotificationForStatus(nextStatus, {
-              orderId: order.id,
-              orderRef,
-              customerEmail: order.customerEmail,
-              total: order.total,
-            });
-      
-            if (adminNotif) {
-              await notifyAdminsRealtime({
-                ...adminNotif,
-                dedupeKeyPrefix: `admin:${adminNotif.action}:${order.id}`,
-                link: `/admin/orders/${order.id}`,
-              });
-            }
+      const adminNotif = getAdminNotificationForStatus(nextStatus, {
+        orderId: order.id,
+        orderRef,
+        customerEmail: order.customerEmail,
+        total: order.total,
+      });
+
+      if (adminNotif) {
+        await notifyAdminsRealtime({
+          ...adminNotif,
+          dedupeKeyPrefix: `admin:${adminNotif.action}:${order.id}`,
+          link: `/admin/orders/${order.id}`,
+        });
+      }
     }
 
     return NextResponse.json({

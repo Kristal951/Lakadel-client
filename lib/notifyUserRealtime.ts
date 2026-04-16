@@ -2,9 +2,20 @@ import { prisma } from "@/lib/prisma";
 import { CreateNotificationInput } from "@/store/types";
 
 export async function notifyUserRealtime(input: CreateNotificationInput) {
-  if (input.dedupeKey) {
+  const { userId, guestId } = input;
+  console.log(userId, guestId, 'notify User')
+
+  if (!userId && !guestId) {
+    throw new Error("Notification must have userId or guestId");
+  }
+
+  const scopedDedupeKey = input.dedupeKey
+    ? `${input.dedupeKey}:${userId ?? guestId}`
+    : undefined;
+
+  if (scopedDedupeKey) {
     const existing = await prisma.notification.findUnique({
-      where: { dedupeKey: input.dedupeKey },
+      where: { dedupeKey: scopedDedupeKey },
     });
 
     if (existing) return existing;
@@ -12,7 +23,8 @@ export async function notifyUserRealtime(input: CreateNotificationInput) {
 
   const n = await prisma.notification.create({
     data: {
-      userId: input.userId,
+      userId: userId ?? null,
+      guestId: guestId ?? null,
       title: input.title,
       message: input.message,
       type: input.type ?? "INFO",
@@ -23,7 +35,7 @@ export async function notifyUserRealtime(input: CreateNotificationInput) {
       audience: input.audience ?? "USER",
       priority: input.priority ?? "NORMAL",
       meta: input.meta,
-      dedupeKey: input.dedupeKey,
+      dedupeKey: scopedDedupeKey,
     },
   });
 
@@ -35,7 +47,8 @@ export async function notifyUserRealtime(input: CreateNotificationInput) {
         "x-internal-key": process.env.SOCKET_INTERNAL_KEY!,
       },
       body: JSON.stringify({
-        userId: input.userId,
+        userId: userId ?? null,
+        guestId: guestId ?? null,
         notification: {
           ...n,
           createdAt: n.createdAt.toISOString(),
@@ -78,28 +91,26 @@ export async function notifyAdminsRealtime({
     select: { id: true },
   });
 
-  const results = [];
-
-  for (const admin of admins) {
-    const notification = await notifyUserRealtime({
-      userId: admin.id,
-      title,
-      message,
-      type,
-      link,
-      action,
-      orderId,
-      status,
-      audience: "ADMIN",
-      priority,
-      meta,
-      dedupeKey: dedupeKeyPrefix
-        ? `${dedupeKeyPrefix}:${admin.id}`
-        : undefined,
-    });
-
-    results.push(notification);
-  }
+  const results = await Promise.all(
+    admins.map((admin) =>
+      notifyUserRealtime({
+        userId: admin.id,
+        title,
+        message,
+        type,
+        link,
+        action,
+        orderId,
+        status,
+        audience: "ADMIN",
+        priority,
+        meta,
+        dedupeKey: dedupeKeyPrefix
+          ? `${dedupeKeyPrefix}:${admin.id}`
+          : undefined,
+      }),
+    ),
+  );
 
   return results;
 }

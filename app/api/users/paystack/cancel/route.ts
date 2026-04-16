@@ -33,7 +33,8 @@ export async function POST(req: Request) {
         status: true,
         orderNumber: true,
         customerEmail: true,
-        total: true
+        total: true,
+        guestId: true
       },
     });
 
@@ -68,7 +69,8 @@ export async function POST(req: Request) {
 
       if (userNotif) {
         await notifyUserRealtime({
-          userId: order.userId,
+          userId: order.userId ?? null,
+          guestId: order.guestId ?? null,
           ...userNotif,
           link: `/orders/${order.orderNumber}`,
         });

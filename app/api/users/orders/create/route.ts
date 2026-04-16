@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateOrderNumber } from "@/lib/cartDB";
 import { Prisma } from "@prisma/client";
+import { getGuestId } from "@/lib/guest";
 
 function badRequest(message: string, extra?: any) {
   return NextResponse.json({ error: message, ...extra }, { status: 400 });
@@ -74,6 +75,11 @@ export async function POST(req: Request) {
       .trim()
       .toLowerCase();
     const userId = body.userId ? String(body.userId) : null;
+    let guestID: string;
+    if (!userId) {
+      const res = await getGuestId();
+      guestID = res ?? "";
+    }
     const phone = String(body.phone || "").trim();
     const currency = normalizeCurrency(body.currency);
     const name = String(body?.name);
@@ -128,7 +134,8 @@ export async function POST(req: Request) {
     const order = await prisma.$transaction(async (tx) => {
       const created = await tx.order.create({
         data: {
-          userId,
+          userId: userId ?? null,
+          guestId: !userId ? guestID : null,
           customerEmail: email,
           customerPhone: phone || null,
           customerName: name,

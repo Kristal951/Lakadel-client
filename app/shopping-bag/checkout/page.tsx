@@ -25,6 +25,7 @@ import {
   State,
 } from "@/store/types";
 import { useToast } from "@/hooks/useToast";
+import PriceContainer from "@/components/shop/PriceContainer";
 
 type PaymentMethod = "PAYSTACK" | "STRIPE";
 type CartLine = CartItem & { product: Product };
@@ -45,21 +46,6 @@ function formatMoney(amount: number, currency: string) {
   }
 }
 
-function getOrCreateGuestId() {
-  if (typeof window === "undefined") return null;
-  const key = "guestId";
-  let id = localStorage.getItem(key);
-  if (id) return id;
-
-  id =
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : `guest_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-
-  localStorage.setItem(key, id);
-  return id;
-}
-
 export default function GuestCheckoutPage() {
   const router = useRouter();
   const { items } = useCartStore();
@@ -68,8 +54,6 @@ export default function GuestCheckoutPage() {
   const { showToast } = useToast();
 
   const payLock = useRef(false);
-
-  const [guestId, setGuestId] = useState<string | null>(null);
   const [countryData, setCountryData] = useState<any[]>([]);
   const [countriesLoading, setCountriesLoading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -78,10 +62,6 @@ export default function GuestCheckoutPage() {
   const [cities, setCities] = useState<string[]>([]);
   const [statesLoading, setStatesLoading] = useState(false);
   const [geoError, setGeoError] = useState<string>("");
-
-  useEffect(() => {
-    setGuestId(getOrCreateGuestId());
-  }, []);
 
   useEffect(() => {
     (async () => {
@@ -178,11 +158,6 @@ export default function GuestCheckoutPage() {
   const handlePay = async () => {
     setError("");
 
-    if (!guestId && !user?.id) {
-      setError("Guest session not ready. Please refresh and try again.");
-      return;
-    }
-
     if (!isFormValid) {
       setError("Please fill in all required fields correctly.");
       return;
@@ -202,7 +177,6 @@ export default function GuestCheckoutPage() {
           phone: phone ? formatPhoneNumberIntl(phone) : null,
           currency,
           shippingAddress: shipping,
-          guestId: guestId,
           userId: user?.id ?? null,
           items: cartItems.map((i) => ({
             productId: i.product.id,
@@ -611,18 +585,27 @@ export default function GuestCheckoutPage() {
             </div>
 
             <div className="flex w-full h-max gap-2 flex-col items-center justify-center pt-10">
-            <button
-              onClick={handlePay}
-              disabled={loading || !isFormValid}
-              className="w-full py-4 bg-foreground text-background rounded-lg font-semibold text-sm hover:bg-foreground/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-background/20 border-t-background rounded-full animate-spin mx-auto" />
-              ) : (
-                `Complete Purchase — ${formatMoney(totalAmount, currency)}`
-              )}
-            </button>
-          </div>
+              <button
+                onClick={handlePay}
+                disabled={loading || !isFormValid}
+                className="w-full py-4 bg-foreground text-background rounded-lg font-semibold text-sm hover:bg-foreground/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-background/20 border-t-background rounded-full animate-spin mx-auto" />
+                ) : (
+                  <div className="flex items-center justify-center">
+                    Complete Purchase —
+                    <PriceContainer
+                      currency={currency}
+                      price={totalAmount}
+                      textColor="white"
+                    />
+                  </div>
+                
+                  
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -656,7 +639,10 @@ export default function GuestCheckoutPage() {
                     </p>
                   </div>
                   <div className="text-sm font-medium">
-                    {formatMoney(item.product.price * item.quantity, currency)}
+                    <PriceContainer
+                      currency={currency}
+                      price={item.product.price}
+                    />
                   </div>
                 </div>
               ))}
@@ -665,14 +651,12 @@ export default function GuestCheckoutPage() {
             <div className="space-y-3 py-6 border-y border-foreground/5">
               <div className="flex justify-between text-sm text-foreground/60">
                 <span>Subtotal</span>
-                <span>{formatMoney(subtotal, currency)}</span>
+                <PriceContainer currency={currency} price={subtotal} />
               </div>
               <div className="flex justify-between text-sm text-foreground/60">
                 <span>Shipping</span>
                 <span>
-                  {shippingFee === 0
-                    ? "Free"
-                    : formatMoney(shippingFee, currency)}
+                  <PriceContainer currency={currency} price={shippingFee} />
                 </span>
               </div>
             </div>
@@ -682,7 +666,11 @@ export default function GuestCheckoutPage() {
                 Total
               </span>
               <span className="text-3xl font-light">
-                {formatMoney(totalAmount, currency)}
+                  <PriceContainer
+                currency={currency}
+                price={totalAmount}
+                textSize="3xl"
+                />
               </span>
             </div>
 

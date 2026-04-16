@@ -30,6 +30,7 @@ async function expirePendingOrdersJob() {
       orderNumber: true,
       createdAt: true,
       status: true,
+      guestId: true
     },
     orderBy: {
       createdAt: "asc",
@@ -57,6 +58,7 @@ async function expirePendingOrdersJob() {
     id: string;
     userId: string | null;
     orderNumber: number | null;
+    guestId: string | null;
   }> = [];
 
   let skippedCount = 0;
@@ -78,6 +80,7 @@ async function expirePendingOrdersJob() {
         id: order.id,
         userId: order.userId,
         orderNumber: order.orderNumber,
+        guestId: order.guestId
       });
     } else {
       skippedCount += 1;
@@ -94,11 +97,16 @@ async function expirePendingOrdersJob() {
         orderId: order.id,
         orderRef,
       });
+      const targetId = order.userId ?? null;
+      const guestId = order.guestId ?? null;
+
+      if (!targetId && !guestId) return;
 
       if (!notif) return false;
 
       await notifyUserRealtime({
-        userId: order.userId,
+        userId: targetId,
+        guestId: guestId,
         ...notif,
         link: `/orders/${order.orderNumber}`,
       });
