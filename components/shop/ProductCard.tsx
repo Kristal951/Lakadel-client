@@ -106,9 +106,9 @@ export default function ProductCard(props: Product & { index?: number }) {
       </div>
 
       <div className="px-1 space-y-1">
-        <h3 className="text-sm md:text-base font-serif font-bold text-foreground leading-tight line-clamp-1">
+        <h1 className="text-sm md:text-base font-bold uppercase text-foreground leading-tight line-clamp-1">
           {name}
-        </h3>
+        </h1>
         <p className="text-xs text-foreground/60 line-clamp-1">{description}</p>
         <div className="pt-1">
           <PriceContainer price={price} currency={currency} />

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Roboto, Lora } from "next/font/google";
+import { Geist, Geist_Mono, Roboto, Lora, Archivo_Black, Inter, Bebas_Neue } from "next/font/google";
 import "./globals.css";
 import Providers from "@/contexts/Providers";
 import { Analytics } from "@vercel/analytics/next"
@@ -10,26 +10,15 @@ export const metadata: Metadata = {
   description: "Shop Lakadel, shop elegance",
 };
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-inter",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const bebas = Bebas_Neue({
   subsets: ["latin"],
-});
-
-const inter = Roboto({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  weight: ["400", "500", "600", "700"],
-});
-
-const playfair = Lora({
-  subsets: ["latin"],
-  variable: "--font-serif",
-  weight: ["400", "500", "600", "700"],
+  weight: "400",
+  variable: "--font-bebas",
 });
 
 export default async function RootLayout({
@@ -43,7 +32,7 @@ export default async function RootLayout({
         <link rel="icon" href="/Lakadel.svg" type="image/svg+xml" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${playfair.variable} font-sans antialiased`}
+        className={`${inter.variable} ${bebas.variable} font-sans antialiased`}
       >
         <Analytics/>
         <SpeedInsights/>

@@ -83,7 +83,13 @@ const Header = () => {
           {sidebarOpen ? <X /> : <Menu />}
         </button>
 
-        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3 md:gap-4">
+         <div className="py-4 flex flex-1 md:hidden justify-center">
+          <Link href="/shop" className="relative h-12 w-24 shrink-0">
+            <Image src="/Lakadel2.png" alt="Logo" fill priority className="object-contain" />
+          </Link>
+        </div>
+
+        <div className="flex min-w-0 items-center justify-end gap-2 sm:gap-3 md:gap-4">
           <div className="md:hidden w-full mr-2 flex flex-wrap justify-end">
             <button className="p-2">
               <Search />

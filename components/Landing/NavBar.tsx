@@ -11,19 +11,15 @@ import ProfileMenu from "../ui/ProfileMenu";
 import useCartStore from "@/store/cartStore";
 import { useSession } from "next-auth/react";
 import Spinner from "../ui/spinner";
-import { Bell, Menu, Search, ShoppingCart, X } from "lucide-react";
-import { useUserNotificationStore } from "@/store/userNotificationsStore";
-import MobileSidebar from "../shop/MobileSidebar";
+import { Menu, Search, X } from "lucide-react";
 import UserNotificationDropdown from "../shop/UserNotificationsDropDown";
-// import UserNotificationDropdown from "./UserNotificationsDropDown";
-// import MobileSidebar from "./MobileSidebar";
+import MobileSidebar from "./MobileSidebar";
 
 const Header = () => {
   const router = useRouter();
 
   const { items, isSyncing } = useCartStore();
   const { query, setQuery } = useProductStore();
-  const { unreadCount } = useUserNotificationStore();
 
   const { data: session } = useSession();
   const user = session?.user as any;
@@ -69,120 +65,56 @@ const Header = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-transparent text-foreground">
       <div className="mx-auto flex h-14 sm:h-18 max-w-full items-center justify-between gap-2 px-2 sm:px-4 md:px-6">
-        <Link
-          href="/shop"
-          className=" hidden md:flex md:relative lg:relative h-10 w-10 sm:h-11 sm:w-28 md:w-32 lg:w-36 shrink-0"
-        >
-          <Image
-            src="/Lakadel2.png"
-            alt="Lakadel logo"
-            fill
-            priority
-            className="object-contain"
-          />
+        
+        <Link href="/shop" className="hidden md:flex relative h-10 w-32 shrink-0">
+          <Image src="/Lakadel2.png" alt="Logo" fill priority className="object-contain" />
         </Link>
-        <button onClick={toggleSidebar} className="p-2 md:hidden">
+
+        <button onClick={toggleSidebar} className="p-2 md:hidden z-50">
           {sidebarOpen ? <X /> : <Menu />}
         </button>
 
-        <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
-          <div className="md:hidden w-full mr-2 flex flex-wrap justify-end">
-            <button className="p-2">
-              <Search />
-            </button>
+        <div className="py-4 flex md:hidden flex-1 justify-center">
+          <Link href="/shop" className="relative h-12 w-24 shrink-0">
+            <Image src="/Lakadel2.png" alt="Logo" fill priority className="object-contain" />
+          </Link>
+        </div>
 
-            <button
-              className="relative rounded-full p-2"
-              onClick={goToBag}
-              disabled={isSyncing}
-            >
-              {cartCount > 0 && !isSyncing && (
-                <span className="absolute right-0 top-0 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-foreground text-[9px] sm:text-[10px] font-bold text-background">
-                  {cartCount}
-                </span>
-              )}
+        <div className="flex items-center justify-end gap-2">
 
-              {isSyncing ? (
-                <Spinner w="5" h="5" />
-              ) : (
-                <IoBagOutline className="h-6 w-6 sm:h-6 sm:w-6" />
-              )}
-            </button>
-          </div>
-
-          {sidebarOpen && (
+           {sidebarOpen && (
             <MobileSidebar
               toggleSidebar={toggleSidebar}
               sidebarOpen={sidebarOpen}
             />
           )}
 
-          {notifOpen && (
-            <div className="absolute right-0 mt-2">
-              <UserNotificationDropdown setOpen={setNotifOpen} />
-            </div>
-          )}
-
-          <div className="relative hidden md:flex items-center group">
-            <IoSearchOutline className="h-6 w-6 text-foreground" />
-            {/* <input
-              type="text"
-              placeholder="Search..."
-              value={localQuery}
-              onChange={(e) => setLocalQuery(e.target.value)}
-              className="w-full rounded-full border border-foreground/20 bg-background py-2 pl-9 pr-3 text-sm sm:pl-10 sm:pr-4 sm:text-base focus:outline-none focus:ring-2 focus:ring-foreground/50 transition-all duration-300"
-            /> */}
+          <div className="relative flex items-center group">
+             <IoSearchOutline className="h-6 w-6 text-foreground cursor-pointer" />
           </div>
 
-          <div className="md:flex hidden shrink-0 items-center md:gap-1 gap-0 ">
-            <button
-              onClick={goToBag}
-              className="relative rounded-full p-2 cursor-pointer hover:bg-foreground/10 transition-colors"
-              aria-label="View Cart"
-              disabled={isSyncing}
-            >
-              {cartCount > 0 && !isSyncing && (
-                <span className="absolute right-0 top-0 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-foreground text-[9px] sm:text-[10px] font-bold text-background">
-                  {cartCount}
-                </span>
-              )}
-
-              {isSyncing ? (
-                <Spinner w="5" h="5" />
-              ) : (
-                <IoBagOutline className="h-5 w-5 sm:h-6 sm:w-6" />
-              )}
-            </button>
-
-            <div className="relative" ref={menuRef}>
-              {user?.image ? (
-                <Image
-                  src={user.image}
-                  alt="Profile Image"
-                  width={32}
-                  height={32}
-                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-full cursor-pointer object-cover hover:bg-foreground/10 transition-colors"
-                  onClick={() => setOpen((prev) => !prev)}
-                />
-              ) : (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setOpen((prev) => !prev);
-                  }}
-                  className="rounded-full p-2 cursor-pointer hover:bg-foreground/10 transition-colors"
-                  aria-label="Profile Menu"
-                >
-                  <CgProfile className="h-5 w-5 sm:h-6 sm:w-6" />
-                </button>
-              )}
-
-              {open && (
-                <div className="absolute right-0 mt-2">
-                  <ProfileMenu setOpen={setOpen} open={open} />
-                </div>
-              )}
-            </div>
+          <div className="flex shrink-0 items-center gap-1">
+             <div className="relative" ref={menuRef}>
+                {user?.image ? (
+                  <Image 
+                    src={user.image} 
+                    alt="Profile" 
+                    width={36} 
+                    height={36} 
+                    className="rounded-full cursor-pointer hover:ring-2 ring-foreground/20"
+                    onClick={() => setOpen(!open)}
+                  />
+                ) : (
+                  <button onClick={() => setOpen(!open)} className="p-2">
+                    <CgProfile className="h-6 w-6" />
+                  </button>
+                )}
+                {open && (
+                  <div className="absolute right-0 mt-2 top-full">
+                    <ProfileMenu setOpen={setOpen} open={open} />
+                  </div>
+                )}
+             </div>
           </div>
         </div>
       </div>
