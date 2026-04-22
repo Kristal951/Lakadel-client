@@ -40,7 +40,6 @@ export function formatPrice(amount: number, currency: string, rate: number) {
   const isZeroDecimal = ["NGN", "JPY", "KRW"].includes(currency.toUpperCase());
 
   const nf = new Intl.NumberFormat("en-US", {
-    // "en-US" ensures standard symbol placement
     style: "currency",
     currency: currency.toUpperCase(),
     maximumFractionDigits: isZeroDecimal ? 0 : 2,
@@ -50,6 +49,7 @@ export function formatPrice(amount: number, currency: string, rate: number) {
   try {
     const parts = nf.formatToParts(converted);
     const symbol = parts.find((p) => p.type === "currency")?.value || "";
+    console.log(parts)
     const value = parts
       .filter((p) => p.type !== "currency")
       .map((p) => p.value)

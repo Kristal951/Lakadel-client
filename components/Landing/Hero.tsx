@@ -7,12 +7,10 @@ const slides = [
   {
     id: 1,
     image: "/assets/Slide_1.jpg",
-    title: "Timeless Sophistication",
   },
   {
     id: 2,
     image: "/assets/Slide_2.jpg",
-    title: "Modern Minimalist",
   },
 ];
 
@@ -22,43 +20,31 @@ export const Hero = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setIndex((prev) => (prev + 1) % slides.length);
-    }, 5000); 
+    }, 5000);
     return () => clearInterval(timer);
   }, []);
 
   return (
-    <section
-      className="relative h-screen w-screen flex flex-col justify-center items-center overflow-hidden bg-background"
-    >
+    <section className="relative md:h-[150vh] h-screen w-screen flex flex-col justify-center items-center overflow-hidden bg-background">
       <AnimatePresence mode="wait">
         <motion.div
           key={slides[index].id}
-          initial={{ opacity: 0, scale: 1.1 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
+          initial={{ scale: 1.1 }}
+          animate={{ scale: 1 }}
           transition={{ duration: 1.5, ease: "easeOut" }}
           className="absolute z-0 inset-0"
         >
           <div className="absolute inset-0 bg-black/20 z-10" />
-          
-          <img
+
+          <motion.img
             src={slides[index].image}
-            alt={slides[index].title}
-            className="h-full w-full object-cover"
+            initial={{ scale: 1.1 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 6, ease: "linear" }}
+            className="absolute inset-0 w-full h-full object-top object-cover"
           />
         </motion.div>
       </AnimatePresence>
-
-      <div className="absolute bottom-10 flex gap-3 z-20">
-        {slides.map((_, i) => (
-          <div
-            key={i}
-            className={`h-0.5 w-8 transition-all duration-500 ${
-              i === index ? "bg-white" : "bg-white/30"
-            }`}
-          />
-        ))}
-      </div>
     </section>
   );
 };

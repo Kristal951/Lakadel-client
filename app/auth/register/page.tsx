@@ -7,6 +7,8 @@ import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { FaRegEyeSlash } from "react-icons/fa";
+import { IoEyeOutline } from "react-icons/io5";
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -17,6 +19,8 @@ export default function Register() {
   const { registerUser, loading } = useUserStore();
   const { showToast } = useToast();
   const router = useRouter();
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -120,7 +124,7 @@ export default function Register() {
 
             <div className="relative group">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="password"
                 value={formData.password}
                 onChange={handleChange}
@@ -128,14 +132,27 @@ export default function Register() {
                 required
                 className="peer block w-full px-4 pt-6 pb-2 text-slate-900 bg-transparent border border-foreground/30 rounded-xl outline-0 focus:border-foreground/70 transition-all"
               />
+
               <label
                 htmlFor="password"
-                className="absolute left-4 top-2 text-xs font-semibold text-foreground/70 transition-all 
-                peer-placeholder-shown:text-base peer-placeholder-shown:text-foreground/50  peer-placeholder-shown:font-normal peer-placeholder-shown:top-4
+                className="absolute left-4 top-2 text-xs font-semibold text-foreground/50 transition-all
+                peer-placeholder-shown:text-base peer-placeholder-shown:text-foreground/50 peer-placeholder-shown:font-normal peer-placeholder-shown:top-4
                 peer-focus:top-2 peer-focus:text-xs peer-focus:text-foreground/70 peer-focus:font-semibold pointer-events-none"
               >
                 Password
               </label>
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute top-5 right-3 text-foreground/60 hover:text-foreground transition"
+              >
+                {showPassword ? (
+                  <FaRegEyeSlash size={20} />
+                ) : (
+                  <IoEyeOutline size={20} />
+                )}
+              </button>
             </div>
           </div>
 

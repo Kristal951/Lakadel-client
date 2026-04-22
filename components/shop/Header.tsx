@@ -100,7 +100,11 @@ const Header = () => {
                 </span>
               )}
 
-              {isSyncing ? <Spinner w="5" h="5" /> : <ShoppingCart />}
+              {isSyncing ? (
+                <Spinner w="5" h="5" />
+              ) : (
+                <IoBagOutline className="h-6 w-6 sm:h-6 sm:w-6" />
+              )}
             </button>
 
             <button
