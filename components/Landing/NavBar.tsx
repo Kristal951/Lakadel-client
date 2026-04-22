@@ -85,7 +85,7 @@ const Header = () => {
           {sidebarOpen ? <X /> : <Menu />}
         </button>
 
-        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3 md:gap-4">
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
           <div className="md:hidden w-full mr-2 flex flex-wrap justify-end">
             <button className="p-2">
               <Search />
@@ -123,18 +123,18 @@ const Header = () => {
             </div>
           )}
 
-          <div className="relative hidden md:flex min-w-0 flex-1 max-w-45 xs:max-w-[220px] sm:max-w-65 md:max-w-85 lg:max-w-105 items-center group">
-            <IoSearchOutline className="absolute left-3 h-4 w-4 sm:h-5 sm:w-5 text-foreground/50 group-focus-within:text-foreground transition-colors" />
-            <input
+          <div className="relative hidden md:flex items-center group">
+            <IoSearchOutline className="h-6 w-6 text-foreground" />
+            {/* <input
               type="text"
               placeholder="Search..."
               value={localQuery}
               onChange={(e) => setLocalQuery(e.target.value)}
               className="w-full rounded-full border border-foreground/20 bg-background py-2 pl-9 pr-3 text-sm sm:pl-10 sm:pr-4 sm:text-base focus:outline-none focus:ring-2 focus:ring-foreground/50 transition-all duration-300"
-            />
+            /> */}
           </div>
 
-          <div className="md:flex hidden shrink-0 items-center md:gap-1 gap-0 border-l border-white/50 pl-0 md:pl-2">
+          <div className="md:flex hidden shrink-0 items-center md:gap-1 gap-0 ">
             <button
               onClick={goToBag}
               className="relative rounded-full p-2 cursor-pointer hover:bg-foreground/10 transition-colors"
@@ -150,7 +150,7 @@ const Header = () => {
               {isSyncing ? (
                 <Spinner w="5" h="5" />
               ) : (
-                <IoBagOutline className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                <IoBagOutline className="h-5 w-5 sm:h-6 sm:w-6" />
               )}
             </button>
 
@@ -173,7 +173,7 @@ const Header = () => {
                   className="rounded-full p-2 cursor-pointer hover:bg-foreground/10 transition-colors"
                   aria-label="Profile Menu"
                 >
-                  <CgProfile className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                  <CgProfile className="h-5 w-5 sm:h-6 sm:w-6" />
                 </button>
               )}
 
