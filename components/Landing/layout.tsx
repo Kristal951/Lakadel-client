@@ -1,5 +1,6 @@
 import NavBar from "@/components/Landing/NavBar";
 import React from "react";
+import Header from "../shop/Header";
 
 export default function LandingPageLayout({
   children,
@@ -8,7 +9,7 @@ export default function LandingPageLayout({
 }) {
   return (
     <div className="flex flex-col h-max w-full">
-      <NavBar />
+      <Header />
       <main className="flex-1">{children}</main>
     </div>
   );

@@ -1,43 +1,78 @@
 "use client";
 
+import useProductStore from "@/store/productStore";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { CgProfile } from "react-icons/cg";
+import { IoBagOutline, IoSearchOutline } from "react-icons/io5";
+import ProfileMenu from "../ui/ProfileMenu";
+import useCartStore from "@/store/cartStore";
+import { useSession } from "next-auth/react";
+import Spinner from "../ui/spinner";
+import { Bell, Menu, Search, ShoppingCart, X } from "lucide-react";
+import { useUserNotificationStore } from "@/store/userNotificationsStore";
+import MobileSidebar from "../shop/MobileSidebar";
+import UserNotificationDropdown from "../shop/UserNotificationsDropDown";
+// import UserNotificationDropdown from "./UserNotificationsDropDown";
+// import MobileSidebar from "./MobileSidebar";
 
-const NavBar = () => {
-  const { scrollY } = useScroll();
-  const [hidden, setHidden] = useState(false);
-  const [activeID, setActiveID] = useState("Home");
+const Header = () => {
+  const router = useRouter();
 
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    const previous = scrollY.getPrevious() ?? 0;
+  const { items, isSyncing } = useCartStore();
+  const { query, setQuery } = useProductStore();
+  const { unreadCount } = useUserNotificationStore();
 
-    if (latest > previous && latest > 80) {
-      setHidden(true);
-    } else {
-      setHidden(false);
-    }
-  });
+  const { data: session } = useSession();
+  const user = session?.user as any;
+
+  const [localQuery, setLocalQuery] = useState(query);
+  const [open, setOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const menuRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setActiveID("Home");
-    document.getElementById("home")?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }, [setActiveID]);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+      if (
+        notifRef.current &&
+        !notifRef.current.contains(event.target as Node)
+      ) {
+        setNotifOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const goToBag = () => router.push("/shopping-bag");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setQuery(localQuery), 300);
+    return () => clearTimeout(timer);
+  }, [localQuery, setQuery]);
+
+  const cartCount = items.length;
+
+  const toggleSidebar = () => {
+    setSidebarOpen((prev) => !prev);
+  };
 
   return (
-    <motion.nav
-      initial={{ y: 0 }}
-      animate={{ y: hidden ? "-100%" : "0%" }}
-      transition={{ duration: 0.35, ease: "easeInOut" }}
-      className="fixed top-0 left-0 right-0 z-50 bg-transparent
-        "
-    >
-      <div className="mx-auto flex w-full items-start md:items-center justify-between md:px-6 py-4 px-2 ">
-        <div className="relative h-11 md:w-35 w-20">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-transparent text-foreground">
+      <div className="mx-auto flex h-14 sm:h-18 max-w-full items-center justify-between gap-2 px-2 sm:px-4 md:px-6">
+        <Link
+          href="/shop"
+          className=" hidden md:flex md:relative lg:relative h-10 w-10 sm:h-11 sm:w-28 md:w-32 lg:w-36 shrink-0"
+        >
           <Image
             src="/Lakadel2.png"
             alt="Lakadel logo"
@@ -45,25 +80,114 @@ const NavBar = () => {
             priority
             className="object-contain"
           />
-        </div>
+        </Link>
+        <button onClick={toggleSidebar} className="p-2 md:hidden">
+          {sidebarOpen ? <X /> : <Menu />}
+        </button>
 
-        <div className="flex items-center md:gap-3">
-          <Link href="/auth/login" className="px-5 py-2 text-sm md:text-base cursor-pointer text-white rounded-full hover:bg-white/10 transition">
-            Sign In
-          </Link>
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3 md:gap-4">
+          <div className="md:hidden w-full mr-2 flex flex-wrap justify-end">
+            <button className="p-2">
+              <Search />
+            </button>
 
-          <Link
-            href="/shop"
-            className="md:px-6 md:py-2 p-2 text-sm md:text-base cursor-pointer md:rounded-full rounded-md font-semibold text-white
-            bg-linear-to-r from-[#B10E0E] to-[#8E0B0B]
-            hover:scale-[1.03] hover:shadow-lg transition-all"
-          >
-            Shop Now
-          </Link>
+            <button
+              className="relative rounded-full p-2"
+              onClick={goToBag}
+              disabled={isSyncing}
+            >
+              {cartCount > 0 && !isSyncing && (
+                <span className="absolute right-0 top-0 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-foreground text-[9px] sm:text-[10px] font-bold text-background">
+                  {cartCount}
+                </span>
+              )}
+
+              {isSyncing ? (
+                <Spinner w="5" h="5" />
+              ) : (
+                <IoBagOutline className="h-6 w-6 sm:h-6 sm:w-6" />
+              )}
+            </button>
+          </div>
+
+          {sidebarOpen && (
+            <MobileSidebar
+              toggleSidebar={toggleSidebar}
+              sidebarOpen={sidebarOpen}
+            />
+          )}
+
+          {notifOpen && (
+            <div className="absolute right-0 mt-2">
+              <UserNotificationDropdown setOpen={setNotifOpen} />
+            </div>
+          )}
+
+          <div className="relative hidden md:flex min-w-0 flex-1 max-w-45 xs:max-w-[220px] sm:max-w-65 md:max-w-85 lg:max-w-105 items-center group">
+            <IoSearchOutline className="absolute left-3 h-4 w-4 sm:h-5 sm:w-5 text-foreground/50 group-focus-within:text-foreground transition-colors" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={localQuery}
+              onChange={(e) => setLocalQuery(e.target.value)}
+              className="w-full rounded-full border border-foreground/20 bg-background py-2 pl-9 pr-3 text-sm sm:pl-10 sm:pr-4 sm:text-base focus:outline-none focus:ring-2 focus:ring-foreground/50 transition-all duration-300"
+            />
+          </div>
+
+          <div className="md:flex hidden shrink-0 items-center md:gap-1 gap-0 border-l border-white/50 pl-0 md:pl-2">
+            <button
+              onClick={goToBag}
+              className="relative rounded-full p-2 cursor-pointer hover:bg-foreground/10 transition-colors"
+              aria-label="View Cart"
+              disabled={isSyncing}
+            >
+              {cartCount > 0 && !isSyncing && (
+                <span className="absolute right-0 top-0 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-foreground text-[9px] sm:text-[10px] font-bold text-background">
+                  {cartCount}
+                </span>
+              )}
+
+              {isSyncing ? (
+                <Spinner w="5" h="5" />
+              ) : (
+                <IoBagOutline className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+              )}
+            </button>
+
+            <div className="relative" ref={menuRef}>
+              {user?.image ? (
+                <Image
+                  src={user.image}
+                  alt="Profile Image"
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-full cursor-pointer object-cover hover:bg-foreground/10 transition-colors"
+                  onClick={() => setOpen((prev) => !prev)}
+                />
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpen((prev) => !prev);
+                  }}
+                  className="rounded-full p-2 cursor-pointer hover:bg-foreground/10 transition-colors"
+                  aria-label="Profile Menu"
+                >
+                  <CgProfile className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </button>
+              )}
+
+              {open && (
+                <div className="absolute right-0 mt-2">
+                  <ProfileMenu setOpen={setOpen} open={open} />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-    </motion.nav>
+    </nav>
   );
 };
 
-export default NavBar;
+export default Header;
