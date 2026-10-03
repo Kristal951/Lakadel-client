@@ -12,7 +12,7 @@ export default async function OrdersPage({
   searchParams: Promise<{ status?: string }>;
 }) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) redirect("/login");
+  if (!session?.user?.id) redirect("/auth/login");
 
   const { status } = await searchParams;
   const rawStatus = status?.toUpperCase();

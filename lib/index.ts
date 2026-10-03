@@ -3,19 +3,19 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { prisma } from "./prisma";
 
-export const countries = [
+export type Country = {
+  code: string;
+  name: string;
+  currency: string;
+  symbol: string;
+};
+
+export const countries: Country[] = [
   { code: "NG", name: "Nigeria", currency: "NGN", symbol: "₦" },
   { code: "US", name: "United States", currency: "USD", symbol: "$" },
   { code: "GB", name: "United Kingdom", currency: "GBP", symbol: "£" },
-  { code: "EU", name: "Eurozone", currency: "EUR", symbol: "€" },
-  { code: "CA", name: "Canada", currency: "CAD", symbol: "$" },
-  { code: "AU", name: "Australia", currency: "AUD", symbol: "$" },
-  { code: "JP", name: "Japan", currency: "JPY", symbol: "¥" },
-  { code: "IN", name: "India", currency: "INR", symbol: "₹" },
-  { code: "SG", name: "Singapore", currency: "SGD", symbol: "$" },
-  { code: "CH", name: "Switzerland", currency: "CHF", symbol: "CHF" },
-  { code: "ZA", name: "South Africa", currency: "ZAR", symbol: "R" },
-  { code: "BR", name: "Brazil", currency: "BRL", symbol: "R$" },
+  { code: "EU", name: "Europe (Eurozone)", currency: "EUR", symbol: "€" },
+  { code: "CA", name: "Canada", currency: "CAD", symbol: "CA$" },
 ];
 
 export function formatNGN(amount: number) {
@@ -172,7 +172,7 @@ export function cld(url: string, w = 800) {
 export function parseOrderRef(orderRef?: string) {
   if (!orderRef) return null;
 
-  const cleaned = orderRef.toUpperCase().replace("L-", "");
+  const cleaned = orderRef.toUpperCase().replace("LKD-", "");
   const num = Number(cleaned);
 
   if (!Number.isInteger(num) || num <= 0) return null;

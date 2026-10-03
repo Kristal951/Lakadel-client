@@ -3,19 +3,27 @@ import { UserState } from "./types";
 import { useExchangeRateStore } from "./exchangeRate";
 import { signIn } from "next-auth/react";
 
-const countryCurrencyMap: Record<string, { code: string; symbol: string }> = {
-  NG: { code: "NGN", symbol: "₦" },
-  US: { code: "USD", symbol: "$" },
-  GB: { code: "GBP", symbol: "£" },
-  EU: { code: "EUR", symbol: "€" },
-  CA: { code: "CAD", symbol: "$" },
-  AU: { code: "AUD", symbol: "$" },
-  JP: { code: "JPY", symbol: "¥" },
-  IN: { code: "INR", symbol: "₹" },
-  SG: { code: "SGD", symbol: "$" },
-  CH: { code: "CHF", symbol: "CHF" },
-  ZA: { code: "ZAR", symbol: "R" },
-  BR: { code: "BRL", symbol: "R$" },
+type Currency = { code: string; symbol: string };
+
+const NGN: Currency = { code: "NGN", symbol: "₦" };
+const USD: Currency = { code: "USD", symbol: "$" };
+const GBP: Currency = { code: "GBP", symbol: "£" };
+const EUR: Currency = { code: "EUR", symbol: "€" };
+const CAD: Currency = { code: "CAD", symbol: "CA$" };
+
+const countryCurrencyMap: Record<string, Currency> = {
+  NG: NGN,
+  US: USD,
+  GB: GBP,
+  CA: CAD,
+  DE: EUR,
+  FR: EUR,
+  IT: EUR,
+  ES: EUR,
+  NL: EUR,
+  IE: EUR,
+  BE: EUR,
+  PT: EUR,
 };
 
 const useUserStore = create<UserState>((set) => ({

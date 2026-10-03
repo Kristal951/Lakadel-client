@@ -85,7 +85,7 @@ function formatMoney(amount: number, currency = "NGN") {
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
   const user = session?.user as any;
-  if (!user?.id) redirect("/login");
+  if (!user?.id) redirect("/auth/login");
   if (user.role !== "ADMIN") redirect("/");
 
   return user;

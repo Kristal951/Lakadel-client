@@ -1,27 +1,30 @@
 "use client";
 
-import { Counts, Order } from "@/store/types";
-import {
-  ArrowLeft,
-  ArrowUpRight,
-  Box,
-  ChevronRight,
-  Clock,
-  Hash,
-  Layers,
-  Search,
-  ShieldCheck,
-  ShoppingBag,
-} from "lucide-react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { ArrowLeft, ArrowUpRight, Search, ShoppingBag, X } from "lucide-react";
+import { Counts, Order } from "@/store/types";
 
 const money = (kobo: number) =>
+  new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN" }).format(
+    kobo / 100,
+  );
+
+const moneyWhole = (kobo: number) =>
   new Intl.NumberFormat("en-NG", {
     style: "currency",
     currency: "NGN",
+    maximumFractionDigits: 0,
   }).format(kobo / 100);
+
+const formatDate = (value: string | Date) =>
+  new Date(value).toLocaleDateString("en-NG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Africa/Lagos",
+  });
 
 const tabs = [
   { label: "All", value: "" },
@@ -31,7 +34,16 @@ const tabs = [
   { label: "Delivered", value: "DELIVERED" },
 ];
 
-const statusTone: Record<string, { text: string; bg: string; dot: string }> = {
+const FLOW = [
+  { value: "PENDING", label: "Pending" },
+  { value: "PAID", label: "Paid" },
+  { value: "SHIPPED", label: "Shipped" },
+  { value: "DELIVERED", label: "Delivered" },
+];
+
+type Tone = { text: string; bg: string; dot: string };
+
+const statusTone: Record<string, Tone> = {
   PENDING: {
     text: "text-amber-600 dark:text-amber-400",
     bg: "bg-amber-500/10",
@@ -54,6 +66,39 @@ const statusTone: Record<string, { text: string; bg: string; dot: string }> = {
   },
 };
 
+const neutralTone: Tone = {
+  text: "text-foreground/70",
+  bg: "bg-foreground/10",
+  dot: "bg-foreground/50",
+};
+
+const Tracker = ({ status }: { status: string }) => {
+  const current = FLOW.findIndex((s) => s.value === status);
+  if (current === -1) return null;
+
+  return (
+    <ol className="grid grid-cols-4 gap-2" aria-label="Order progress">
+      {FLOW.map((step, i) => {
+        const reached = i <= current;
+        return (
+          <li key={step.value} aria-current={i === current ? "step" : undefined}>
+            <div
+              className={`h-1 rounded-full ${reached ? "bg-foreground" : "bg-foreground/10"
+                }`}
+            />
+            <span
+              className={`mt-2 block text-[10px] font-semibold uppercase tracking-widest ${reached ? "text-foreground" : "text-foreground/35"
+                }`}
+            >
+              {step.label}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+};
+
 const Client = ({
   orders,
   counts,
@@ -65,279 +110,272 @@ const Client = ({
   totalSpent: number;
   activeStatus?: string;
 }) => {
-  const router = useRouter();
+  const [search, setSearch] = useState("");
+
+  const visibleOrders = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return orders;
+    return orders.filter(
+      (o) =>
+        o.formattedOrderNumber.toLowerCase().includes(q) ||
+        o.orderItems.some((i) => i.product?.name?.toLowerCase().includes(q)),
+    );
+  }, [orders, search]);
+
+  const activeCount =
+    (counts.PENDING ?? 0) + (counts.PAID ?? 0) + (counts.SHIPPED ?? 0);
+
+  const isSearching = search.trim().length > 0;
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans antialiased">
-      <div className="relative mx-auto max-w-7xl px-6 py-12 lg:py-20">
-        <div className="mb-14 flex flex-col gap-8 lg:mb-16 lg:flex-row lg:items-end lg:justify-between">
+    <div className="min-h-screen bg-background font-sans text-foreground antialiased">
+      <div className="mx-auto max-w-5xl md:px-6 px-3 py-10 lg:py-16">
+        <Link
+          href="/shop"
+          className="mb-8 inline-flex items-center gap-2 text-sm text-foreground/60 transition-colors hover:text-foreground"
+        >
+          <ArrowLeft size={16} />
+          Continue shopping
+        </Link>
+
+        <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="mb-6 inline-flex items-center gap-2 rounded-full border border-foreground/10 px-4 py-2 text-sm text-foreground/70 transition hover:border-foreground/20 hover:text-foreground"
-            >
-              <ArrowLeft size={16} />
-              Back
-            </button>
-
-            <h1 className="text-5xl font-medium tracking-[-0.06em] sm:text-6xl">
-              Orders<span className="text-foreground/35">.</span>
+            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+              Your orders
             </h1>
-
-            <p className="mt-4 max-w-xl text-sm leading-6 text-foreground/60">
-              Review your order history, track shipments, and inspect every
-              purchase from one clean archive.
+            <p className="mt-2 text-sm text-foreground/60">
+              Track deliveries and revisit past purchases.
             </p>
           </div>
 
-          <div className="group relative w-full sm:w-80">
+          <div className="relative w-full sm:w-72">
             <Search
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40 transition-colors group-focus-within:text-foreground"
               size={18}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-foreground/70"
             />
             <input
-              type="text"
-              placeholder="Search index..."
-              className="w-full rounded-2xl border border-foreground/10 bg-background py-4 pl-12 pr-4 text-sm outline-none transition-all placeholder:text-foreground/35 focus:border-foreground/25"
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by orderID  or product"
+              aria-label="Search orders"
+              className="w-full rounded-lg border border-foreground/30 bg-background py-3 pl-11 pr-10 text-sm outline-none transition placeholder:text-foreground/35 focus:border-foreground/70"
             />
-          </div>
-        </div>
-
-        <div className="mb-16 grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="rounded-4xl border border-foreground/10 bg-background p-6">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-foreground/70">
-              Total Orders
-            </p>
-            <p className="mt-3 text-3xl font-medium tracking-tight">
-              {counts.all}
-            </p>
-          </div>
-
-          <div className="rounded-4xl border border-foreground/10 bg-background p-6">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-foreground/70">
-              Total Spent
-            </p>
-            <p className="mt-3 text-3xl font-medium tracking-tight">
-              {money(totalSpent)}
-            </p>
-          </div>
-
-          <div className="rounded-4xl border border-foreground/10 bg-background p-6">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-foreground/70">
-              Active Orders
-            </p>
-            <p className="mt-3 text-3xl font-medium tracking-tight">
-              {counts.PENDING + counts.PAID + counts.SHIPPED}
-            </p>
-          </div>
-        </div>
-
-        <div className="mb-16 grid grid-cols-2 gap-3 md:grid-cols-5">
-          {tabs.map((tab) => {
-            const isActive =
-              tab.value === "" ? !activeStatus : activeStatus === tab.value;
-
-            const tabCount =
-              tab.value === ""
-                ? counts.all
-                : counts[tab.value as keyof Counts];
-
-            return (
-              <Link
-                key={tab.label}
-                href={tab.value ? `/orders?status=${tab.value}` : "/orders"}
-                className={`group rounded-[1.75rem] border p-4 transition-all ${
-                  isActive
-                    ? "border-foreground/30 bg-foreground text-background"
-                    : "border-foreground/10 bg-background hover:border-foreground/25"
-                }`}
+            {isSearching && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                aria-label="Clear search"
+                className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-foreground/50 hover:bg-foreground/10 hover:text-foreground"
               >
-                <span
-                  className={`text-[10px] font-bold uppercase tracking-[0.18em] ${
-                    isActive
-                      ? "text-background/70"
-                      : "text-foreground/70 group-hover:text-foreground"
-                  }`}
-                >
-                  {tab.label}
-                </span>
-
-                <div className="mt-6 flex items-end justify-between">
-                  <span className="text-2xl font-light tracking-tight">
-                    {String(tabCount).padStart(2, "0")}
-                  </span>
-                  <ChevronRight
-                    size={16}
-                    className={`transition-transform group-hover:translate-x-1 ${
-                      isActive ? "text-background/70" : "text-foreground/30"
-                    }`}
-                  />
-                </div>
-              </Link>
-            );
-          })}
+                <X size={14} />
+              </button>
+            )}
+          </div>
         </div>
 
-        {orders.length > 0 ? (
-          <div className="space-y-10">
-            {orders.map((order) => {
-              const tone = statusTone[order.status] ?? statusTone.PENDING;
-              const previewItems = order.orderItems.slice(0, 2);
-              const remainingItems = order.orderItems.length - previewItems.length;
+        <dl className="mb-8 grid grid-cols-3 divide-x divide-foreground/40 rounded-3xl border border-foreground/40">
+          {[
+            { label: "Orders", value: String(counts.all) },
+            { label: "Total spent", value: moneyWhole(totalSpent) },
+            { label: "Active", value: String(activeCount) },
+          ].map((stat) => (
+            <div key={stat.label} className="min-w-0 px-4 py-4 sm:px-6 sm:py-5">
+              <dt className="text-[10px] font-bold uppercase tracking-[0.18em] text-foreground/60">
+                {stat.label}
+              </dt>
+              <dd className="mt-1 truncate text-lg font-semibold tracking-tight sm:text-2xl">
+                {stat.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+
+        <nav
+          aria-label="Filter orders by status"
+          className="-mx-6 mb-8 overflow-x-auto px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          <ul className="flex w-max gap-2">
+            {tabs.map((tab) => {
+              const isActive =
+                tab.value === "" ? !activeStatus : activeStatus === tab.value;
+              const tabCount =
+                tab.value === ""
+                  ? counts.all
+                  : (counts[tab.value as keyof Counts] ?? 0);
 
               return (
-                <div
+                <li key={tab.label}>
+                  <Link
+                    href={tab.value ? `/orders?status=${tab.value}` : "/orders"}
+                    aria-current={isActive ? "page" : undefined}
+                    className={`inline-flex items-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition ${isActive
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-foreground/10 hover:border-foreground/30"
+                      }`}
+                  >
+                    {tab.label}
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${isActive
+                          ? "bg-background/20 text-background"
+                          : "bg-foreground/10 text-foreground/70"
+                        }`}
+                    >
+                      {tabCount}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        {visibleOrders.length > 0 ? (
+          <div className="space-y-5">
+            {visibleOrders.map((order) => {
+              const tone = statusTone[order.status] ?? neutralTone;
+              const previewItems = order.orderItems.slice(0, 2);
+              const remaining = order.orderItems.length - previewItems.length;
+              const itemCount = order.orderItems.length;
+
+              return (
+                <article
                   key={order.id}
-                  className="group grid overflow-hidden rounded-[2.5rem] border border-foreground/10 bg-background lg:grid-cols-[1fr_350px]"
+                  className="overflow-hidden rounded-3xl border border-foreground/10 bg-background transition-colors hover:border-foreground/25"
                 >
-                  <div className="p-8 lg:p-10">
-                    <div className="mb-10 flex flex-wrap items-center gap-4 text-[11px] uppercase tracking-[0.16em] text-foreground/70">
-                      <span className="inline-flex items-center gap-2 rounded-xl bg-foreground/5 px-3 py-1.5 text-foreground/70">
-                        <Hash size={12} />
+                  <header className="flex flex-wrap items-center justify-between gap-3 border-b border-foreground/10 bg-foreground/3 px-5 py-4 sm:px-6">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                      <span className="font-semibold tracking-tight">
                         {order.formattedOrderNumber}
                       </span>
-
-                      <span className="inline-flex items-center gap-2">
-                        <Clock size={12} />
-                        {new Date(order.createdAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
+                      <span className="text-foreground/55">
+                        {formatDate(order.createdAt)}
                       </span>
-
-                      <span className="inline-flex items-center gap-2">
-                        <Layers size={12} />
-                        {order.orderItems.length} item
-                        {order.orderItems.length > 1 ? "s" : ""}
+                      <span className="text-foreground/55">
+                        {itemCount} item{itemCount > 1 ? "s" : ""}
                       </span>
                     </div>
 
-                    <div className="space-y-8">
-                      {previewItems.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex gap-5 p-4 sm:gap-6 sm:p-5"
-                        >
-                          <div className="relative h-32 w-24 shrink-0 overflow-hidden rounded-3xl border border-foreground/8 bg-foreground/5 sm:h-36 sm:w-28">
-                            <Image
-                              src={item.product?.images?.[0] || "/placeholder.png"}
-                              alt={item.product?.name || "Product image"}
-                              fill
-                              sizes="112px"
-                              className="object-cover"
-                            />
-                          </div>
+                    <span
+                      className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${tone.bg} ${tone.text}`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} />
+                      {order.status}
+                    </span>
+                  </header>
 
-                          <div className="flex min-w-0 flex-1 flex-col justify-center">
-                            <h3 className="line-clamp-2 text-xl font-medium tracking-tight sm:text-2xl">
-                              {item.product?.name || "Unnamed product"}
-                            </h3>
-
-                            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-foreground/55">
-                              <span>Qty: {item.quantity}</span>
-                              {item.selectedSize && (
-                                <>
-                                  <span className="h-1 w-1 rounded-full bg-foreground/25" />
-                                  <span>Size: {item.selectedSize}</span>
-                                </>
-                              )}
+                  <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[1fr_250px] lg:gap-10">
+                    <div className="space-y-6">
+                      <ul className="space-y-4">
+                        {previewItems.map((item) => (
+                          <li key={item.id} className="flex gap-4">
+                            <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-2xl bg-foreground/5">
+                              <Image
+                                src={item.product?.images?.[0] || "/placeholder.png"}
+                                alt={item.product?.name || "Product image"}
+                                fill
+                                sizes="80px"
+                                className="object-cover"
+                              />
                             </div>
 
-                            <p className="mt-4 text-lg font-medium tracking-tight">
-                              {money(item.unitPriceKobo)}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
+                            <div className="flex min-w-0 flex-1 flex-col justify-center">
+                              <h3 className="line-clamp-2 text-base font-medium tracking-tight sm:text-lg">
+                                {item.product?.name || "Unnamed product"}
+                              </h3>
+                              <p className="mt-1 text-sm text-foreground/55">
+                                Qty {item.quantity}
+                                {item.selectedSize ? ` · Size ${item.selectedSize}` : ""}
+                              </p>
+                              <p className="mt-2 text-base font-medium">
+                                {money(item.unitPriceKobo)}
+                                {item.quantity > 1 && (
+                                  <span className="font-normal text-foreground/70">
+                                    {" "}
+                                    each
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
 
-                      {remainingItems > 0 && (
-                        <div className="px-4 sm:px-5">
-                          <p className="text-sm text-foreground/50">
-                            +{remainingItems} more item
-                            {remainingItems > 1 ? "s" : ""} in this order
-                          </p>
-                        </div>
+                      {remaining > 0 && (
+                        <p className="text-sm text-foreground/50">
+                          +{remaining} more item{remaining > 1 ? "s" : ""} in this
+                          order
+                        </p>
                       )}
-                    </div>
-                  </div>
 
-                  <div className="flex flex-col justify-between border-t border-foreground/10 bg-foreground/3 p-8 lg:border-l lg:border-t-0 lg:p-10">
-                    <div className="space-y-7">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-foreground/70">
-                            Statement Total
-                          </p>
-                          <p className="text-3xl font-medium tracking-tight sm:text-4xl">
-                            {money(order.totalKobo)}
-                          </p>
-                        </div>
-
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full border border-foreground/10 bg-background">
-                          <ShieldCheck
-                            size={18}
-                            className="text-foreground/70"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between rounded-2xl border border-foreground/10 bg-background px-4 py-4">
-                        <div className="flex items-center gap-3">
-                          <Box size={16} className="text-foreground/70" />
-                          <span className="text-xs font-medium text-foreground/70">
-                            Status
-                          </span>
-                        </div>
-
-                        <span
-                          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${tone.bg} ${tone.text}`}
-                        >
-                          <span
-                            className={`h-1.5 w-1.5 rounded-full ${tone.dot}`}
-                          />
-                          {order.status}
-                        </span>
-                      </div>
+                      <Tracker status={order.status} />
                     </div>
 
-                    <Link
-                      href={`/orders/${order.formattedOrderNumber}`}
-                      className="group/btn mt-10 flex w-full items-center justify-between rounded-[1.75rem] bg-foreground px-6 py-5 text-[11px] font-bold uppercase tracking-[0.22em] text-background transition-all hover:opacity-90"
-                    >
-                      Track Shipment
-                      <ArrowUpRight
-                        size={18}
-                        className="transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5"
-                      />
-                    </Link>
+                    <div className="flex flex-col justify-between gap-6 border-t border-foreground/10 pt-5 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/60">
+                          Order total
+                        </p>
+                        <p className="mt-1 text-3xl font-semibold tracking-tight">
+                          {money(order.totalKobo)}
+                        </p>
+                      </div>
+
+                      <Link
+                        href={`/orders/${order.formattedOrderNumber}`}
+                        className="group/btn flex items-center justify-between rounded-full bg-foreground px-5 py-3.5 text-xs font-bold uppercase tracking-[0.18em] text-background transition hover:opacity-90"
+                      >
+                        {order.status === "SHIPPED" ? "Track shipment" : "View order"}
+                        <ArrowUpRight
+                          size={16}
+                          className="transition-transform group-hover/btn:-translate-y-0.5 group-hover/btn:translate-x-0.5"
+                        />
+                      </Link>
+                    </div>
                   </div>
-                </div>
+                </article>
               );
             })}
           </div>
         ) : (
-          <div className="flex flex-col items-center py-32 text-center">
-            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full border border-foreground/10 bg-foreground/4">
-              <ShoppingBag size={30} className="text-foreground/25" />
+          <div className="flex flex-col items-center py-24 text-center">
+            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-foreground/10 bg-foreground/4">
+              <ShoppingBag size={26} className="text-foreground/30" />
             </div>
 
-            <h2 className="text-2xl font-medium tracking-tight">
-              The archive is vacant.
+            <h2 className="text-xl font-medium tracking-tight">
+              {isSearching
+                ? "No matching orders"
+                : activeStatus
+                  ? `No ${activeStatus.toLowerCase()} orders`
+                  : "No orders yet"}
             </h2>
 
-            <p className="mt-3 max-w-md text-sm leading-6 text-foreground/55">
-              No orders were found for this view yet.
+            <p className="mt-2 max-w-sm text-sm text-foreground/55">
+              {isSearching
+                ? `Nothing matches "${search.trim()}". Try an order number or a product name.`
+                : activeStatus
+                  ? "Orders will show up here as they reach this stage."
+                  : "When you place an order, it will show up here."}
             </p>
 
-            <Link
-              href="/shop"
-              className="mt-6 inline-flex items-center gap-2 rounded-full border border-foreground/15 px-5 py-3 text-sm font-medium transition hover:bg-foreground hover:text-background"
-            >
-              Start Exploring
-              <ArrowUpRight size={16} />
-            </Link>
+            {isSearching ? (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="mt-6 rounded-full border border-foreground/15 px-5 py-2.5 text-sm font-medium transition hover:bg-foreground hover:text-background"
+              >
+                Clear search
+              </button>
+            ) : (
+              <Link
+                href="/shop"
+                className="mt-6 inline-flex items-center gap-2 rounded-full border border-foreground/15 px-5 py-2.5 text-sm font-medium transition hover:bg-foreground hover:text-background"
+              >
+                Browse the shop
+                <ArrowUpRight size={16} />
+              </Link>
+            )}
           </div>
         )}
       </div>

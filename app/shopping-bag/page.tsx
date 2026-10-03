@@ -40,7 +40,7 @@ export default function ShoppingBag() {
   if (cartItems.length === 0) {
     return (
       <section className="min-h-[70vh] flex flex-col items-center justify-center p-6 bg-background">
-        <div className="bg-background p-16 rounded-[3rem] flex flex-col items-center text-center max-w-md">
+        <div className="bg-background md:p-16 rounded-[3rem] flex flex-col items-center text-center max-w-md">
           <div className="w-20 h-20 bg-foreground border border-foreground rounded-full flex items-center justify-center shadow-sm mb-6">
             <IoBagOutline size={32} className="text-background" />
           </div>
@@ -78,7 +78,7 @@ export default function ShoppingBag() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
         <div>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
-            Your Cart
+            Your Shopping Bag
           </h1>
           <p className="text-foreground/50 mt-2 text-lg font-medium">
             {cartItems.length} {cartItems.length === 1 ? "item" : "items"} ready
@@ -118,7 +118,6 @@ export default function ShoppingBag() {
       <div className="grid lg:grid-cols-12 gap-25 items-start">
         <div className="lg:col-span-8 space-y-10">
           {cartItems.map((item) => {
-            console.log(item);
             const imgSrc = item.product?.images?.[0] || "/placeholder.png";
             const name = item.product?.name ?? "Product";
             const price = item.product?.price ?? 0;
@@ -205,9 +204,9 @@ export default function ShoppingBag() {
                     </div>
 
                     <div className="flex gap-2">
-                      <button className="p-3 hover:bg-neutral-50 rounded-full transition-colors text-neutral-400 hover:text-red-500 border border-transparent hover:border-neutral-100">
+                      {/* <button className="p-3 hover:bg-neutral-50 rounded-full transition-colors text-neutral-400 hover:text-red-500 border border-transparent hover:border-neutral-100">
                         <Heart size={20} />
-                      </button>
+                      </button> */}
                       <button
                         onClick={() =>
                           removeFromCart(
