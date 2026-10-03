@@ -3,7 +3,6 @@ import { CreateNotificationInput } from "@/store/types";
 
 export async function notifyUserRealtime(input: CreateNotificationInput) {
   const { userId, guestId } = input;
-  console.log(userId, guestId, 'notify User')
 
   if (!userId && !guestId) {
     throw new Error("Notification must have userId or guestId");

@@ -17,22 +17,19 @@
 
 html {
   transition: background-color 200ms ease, color 200ms ease;
-  font-family: var(--font-sans), system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  /* font-family: var(--font-sans), system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; */
 }
 
-/* Disable transitions on first paint */
 html:not(.theme-ready) * {
   transition: none !important;
 }
 
-/* Dark mode tokens */
 .dark {
   --background: #0a0a0a;
   --foreground: #ffffff;
   --hover: rgba(255, 255, 255, 0.18);
 }
 
-/* Font scaling */
 html[data-font="1"] {
   font-size: 14px;
 }
@@ -55,14 +52,12 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-bebas), sans-serif;
 }
 
-/* UX polish */
 button,
 input[type="checkbox"],
 select {
   cursor: pointer;
 }
 
-/* Hide scrollbar but allow scroll */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
